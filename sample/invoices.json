@@ -1,0 +1,272 @@
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "67822338651f216c6cd09f23",
+      "companyId": "673788e3665f0a1024b73447",
+      "clientId": {
+        "_id": "678214542b1598fa2f87205d",
+        "companyId": "673788e3665f0a1024b73447",
+        "email": "ahmed.ali@test.com",
+        "about": "Freelance digital marketer looking to improve reach.",
+        "__v": 0,
+        "personalInfo": {
+          "_id": "678214542b1598fa2f87205f",
+          "title": "Mr.",
+          "firstName": "Ahmed",
+          "middleName": "",
+          "lastName": "Ali",
+          "address": "Main Market, Lahore, Pakistan",
+          "phone": "+92-314-1237632",
+          "avatar": "https://example.com/avatars/bilal.jpg",
+          "joinDate": "2024-10-08T00:00:00.000Z",
+          "createdAt": "2025-01-11T06:48:52.256Z",
+          "updatedAt": "2025-01-11T09:28:07.543Z",
+          "__v": 0
+        }
+      },
+      "invoiceBy": {
+        "_id": "6728f5177b9b7df2b008a043",
+        "email": "admin@test1.com",
+        "role": "admin",
+        "__v": 0,
+        "personalInfo": {
+          "_id": "6728f5177b9b7df2b008a045",
+          "firstName": "John",
+          "__v": 0,
+          "address": "123 Elm Street Lahore Punjab Pakistan",
+          "avatar": "https://example.com/avatars/johndoe.png",
+          "lastName": "Doe",
+          "middleName": "Alexander",
+          "phone": "+92-321-1234567",
+          "title": "Mr."
+        },
+        "subscriptionId": "67373566665f0a1024b73419",
+        "updatedAt": "2025-01-11T17:45:11.847Z",
+        "companyId": "673788e3665f0a1024b73447",
+        "payrollId": "67386f1e79cc0bfd99cb9771",
+        "employeeId": "1001"
+      },
+      "items": [
+        {
+          "_id": "67822338651f216c6cd09f2a",
+          "invoiceId": "67822338651f216c6cd09f23",
+          "companyId": "673788e3665f0a1024b73447",
+          "productId": {
+            "_id": "678019b290e149b98a291617",
+            "companyId": "673788e3665f0a1024b73447",
+            "name": "Mobile App Development",
+            "desc": "Development and maintenance of mobile applications",
+            "price": 1200,
+            "images": [],
+            "__v": 0
+          },
+          "quantity": 2,
+          "salePrice": 1200,
+          "__v": 0
+        },
+        {
+          "_id": "67822338651f216c6cd09f28",
+          "invoiceId": "67822338651f216c6cd09f23",
+          "companyId": "673788e3665f0a1024b73447",
+          "productId": {
+            "_id": "678019ca90e149b98a291622",
+            "companyId": "673788e3665f0a1024b73447",
+            "name": "Cloud Hosting",
+            "desc": "Cloud server setup and hosting services",
+            "price": 800,
+            "images": [],
+            "__v": 0
+          },
+          "quantity": 1,
+          "salePrice": 800,
+          "__v": 0
+        }
+      ],
+      "invoiceNo": 1001,
+      "issueDate": "2024-01-10T00:00:00.000Z",
+      "dueDate": "2025-02-10T00:00:00.000Z",
+      "status": "paid",
+      "tax": 11,
+      "discount": 5,
+      "createdAt": "2025-01-11T07:52:24.193Z",
+      "updatedAt": "2025-01-11T07:53:25.120Z",
+      "__v": 1,
+      "paidAmount": 3392,
+      "totalAmount": 3392
+    },
+    {
+      "_id": "6782a163651f216c6cd0a153",
+      "companyId": "673788e3665f0a1024b73447",
+      "clientId": {
+        "_id": "67829adf651f216c6cd0a07b",
+        "companyId": "673788e3665f0a1024b73447",
+        "email": "sobia.malik@test.com",
+        "about": "",
+        "__v": 0,
+        "personalInfo": {
+          "_id": "67829adf651f216c6cd0a07d",
+          "title": "Ms",
+          "firstName": "Sobia",
+          "middleName": "",
+          "lastName": "Malik",
+          "address": "Haripur, KPK, Pakistan.",
+          "phone": "+923466194354",
+          "avatar": "",
+          "joinDate": "2024-12-10T00:00:00.000Z",
+          "createdAt": "2025-01-11T16:22:55.539Z",
+          "updatedAt": "2025-01-11T16:22:55.539Z",
+          "__v": 0
+        }
+      },
+      "invoiceBy": {
+        "_id": "6728f5177b9b7df2b008a043",
+        "email": "admin@test1.com",
+        "role": "admin",
+        "__v": 0,
+        "personalInfo": {
+          "_id": "6728f5177b9b7df2b008a045",
+          "firstName": "John",
+          "__v": 0,
+          "address": "123 Elm Street Lahore Punjab Pakistan",
+          "avatar": "https://example.com/avatars/johndoe.png",
+          "lastName": "Doe",
+          "middleName": "Alexander",
+          "phone": "+92-321-1234567",
+          "title": "Mr."
+        },
+        "subscriptionId": "67373566665f0a1024b73419",
+        "updatedAt": "2025-01-11T17:45:11.847Z",
+        "companyId": "673788e3665f0a1024b73447",
+        "payrollId": "67386f1e79cc0bfd99cb9771",
+        "employeeId": "1001"
+      },
+      "items": [
+        {
+          "_id": "6782a164651f216c6cd0a157",
+          "invoiceId": "6782a163651f216c6cd0a153",
+          "companyId": "673788e3665f0a1024b73447",
+          "productId": {
+            "_id": "678019ca90e149b98a291622",
+            "companyId": "673788e3665f0a1024b73447",
+            "name": "Cloud Hosting",
+            "desc": "Cloud server setup and hosting services",
+            "price": 800,
+            "images": [],
+            "__v": 0
+          },
+          "quantity": 3,
+          "salePrice": 800,
+          "__v": 0
+        }
+      ],
+      "invoiceNo": 1002,
+      "issueDate": "2025-01-11T00:00:00.000Z",
+      "dueDate": "2025-01-24T00:00:00.000Z",
+      "status": "paid",
+      "notes": "loremippn snotes hetefs dnnfdsj df djdfnsf",
+      "tax": 10,
+      "discount": 5,
+      "createdAt": "2025-01-11T16:50:43.893Z",
+      "updatedAt": "2025-01-11T16:53:25.320Z",
+      "__v": 1,
+      "paidAmount": 2520,
+      "totalAmount": 2520
+    },
+    {
+      "_id": "67837c69a932646ba569df81",
+      "companyId": "673788e3665f0a1024b73447",
+      "clientId": {
+        "_id": "6782143b2b1598fa2f872050",
+        "companyId": "673788e3665f0a1024b73447",
+        "email": "ali.sher@test.com",
+        "about": "Freelance digital marketer looking to improve reach.",
+        "__v": 0,
+        "personalInfo": {
+          "_id": "6782143b2b1598fa2f872052",
+          "title": "Mr.",
+          "firstName": "Ali",
+          "middleName": "Sher",
+          "lastName": "Shaikh",
+          "address": "77 Green Valley, Islamabad, Pakistan",
+          "phone": "+92-344-0987654",
+          "avatar": "https://example.com/avatars/bilal.jpg",
+          "joinDate": "2024-05-20T00:00:00.000Z",
+          "createdAt": "2025-01-11T06:48:27.471Z",
+          "updatedAt": "2025-01-11T06:48:27.471Z",
+          "__v": 0
+        }
+      },
+      "invoiceBy": {
+        "_id": "6728f5177b9b7df2b008a043",
+        "email": "admin@test1.com",
+        "role": "admin",
+        "__v": 0,
+        "personalInfo": {
+          "_id": "6728f5177b9b7df2b008a045",
+          "firstName": "John",
+          "__v": 0,
+          "address": "123 Elm Street Lahore Punjab Pakistan",
+          "avatar": "https://example.com/avatars/johndoe.png",
+          "lastName": "Doe",
+          "middleName": "Alexander",
+          "phone": "+92-321-1234567",
+          "title": "Mr."
+        },
+        "subscriptionId": "67373566665f0a1024b73419",
+        "updatedAt": "2025-01-11T17:45:11.847Z",
+        "companyId": "673788e3665f0a1024b73447",
+        "payrollId": "67386f1e79cc0bfd99cb9771",
+        "employeeId": "1001"
+      },
+      "items": [
+        {
+          "_id": "67837c69a932646ba569df86",
+          "invoiceId": "67837c69a932646ba569df81",
+          "companyId": "673788e3665f0a1024b73447",
+          "productId": {
+            "_id": "678019b290e149b98a291617",
+            "companyId": "673788e3665f0a1024b73447",
+            "name": "Mobile App Development",
+            "desc": "Development and maintenance of mobile applications",
+            "price": 1200,
+            "images": [],
+            "__v": 0
+          },
+          "quantity": 1,
+          "salePrice": 1200,
+          "__v": 0
+        },
+        {
+          "_id": "67837c69a932646ba569df88",
+          "invoiceId": "67837c69a932646ba569df81",
+          "companyId": "673788e3665f0a1024b73447",
+          "productId": {
+            "_id": "678019ca90e149b98a291622",
+            "companyId": "673788e3665f0a1024b73447",
+            "name": "Cloud Hosting",
+            "desc": "Cloud server setup and hosting services",
+            "price": 800,
+            "images": [],
+            "__v": 0
+          },
+          "quantity": 1,
+          "salePrice": 800,
+          "__v": 0
+        }
+      ],
+      "invoiceNo": 1003,
+      "issueDate": "2024-10-11T00:00:00.000Z",
+      "dueDate": "2024-12-23T00:00:00.000Z",
+      "status": "pending",
+      "notes": "loremippn snotes hetefs dnnfdsj df djdfnsf",
+      "tax": 10,
+      "discount": 5,
+      "createdAt": "2025-01-12T08:25:13.962Z",
+      "updatedAt": "2025-01-12T08:25:14.000Z",
+      "__v": 1,
+      "paidAmount": 0,
+      "totalAmount": 2100
+    }
+  ]
+}
