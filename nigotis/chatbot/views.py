@@ -8,8 +8,12 @@ from rest_framework.viewsets import ModelViewSet
 from drf_spectacular.utils import extend_schema
 from django.utils.timezone import now
 
-from .models import ChatSession
-from .serializers import ChatSessionSerializer, LoginRequestSerializer
+from .models import ChatSession, ChatMessage
+from .serializers import (
+    LoginRequestSerializer,
+    ChatSessionSerializer,
+    ChatMessageSerializer,
+)
 
 
 class ChatSessionViewSet(ModelViewSet):
@@ -24,8 +28,8 @@ class ChatSessionViewSet(ModelViewSet):
         login_serializer = LoginRequestSerializer(data=request.data)
         login_serializer.is_valid(raise_exception=True)
 
-        login_email = login_serializer.validated_data["login_email"]
-        login_password = login_serializer.validated_data["login_password"]
+        login_email = login_serializer.validated_data["email"]
+        login_password = login_serializer.validated_data["password"]
 
         try:
             response = requests.post(
@@ -98,3 +102,11 @@ class CheckAuthTokenView(APIView):
             return Response(
                 {"error": "Chat session not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class ChatMessageViewSet(ModelViewSet):
+    queryset = ChatMessage.objects.all()
+    serializer_class = ChatMessageSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(sender="USER")
