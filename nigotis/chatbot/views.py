@@ -2,9 +2,9 @@ import requests
 from datetime import timedelta
 
 from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import GenericAPIView
 from drf_spectacular.utils import extend_schema
 from django.utils.timezone import now
 
@@ -13,9 +13,13 @@ from .serializers import (
     LoginRequestSerializer,
     ChatSessionSerializer,
     ChatMessageSerializer,
+    OpenAiTestSerializer,
 )
 
+from .bot.pipeline import Pipeline
 
+
+@extend_schema(tags=["Session"])
 class ChatSessionViewSet(ModelViewSet):
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionSerializer
@@ -63,7 +67,8 @@ class ChatSessionViewSet(ModelViewSet):
             )
 
 
-class CheckAuthTokenView(APIView):
+@extend_schema(tags=["Session"])
+class CheckAuthTokenView(GenericAPIView):
     def post(self, _, id):
         try:
             session = ChatSession.objects.get(id=id)
@@ -104,9 +109,34 @@ class CheckAuthTokenView(APIView):
             )
 
 
+@extend_schema(tags=["Message"])
 class ChatMessageViewSet(ModelViewSet):
     queryset = ChatMessage.objects.all()
     serializer_class = ChatMessageSerializer
 
     def perform_create(self, serializer):
         serializer.save(sender="USER")
+
+
+@extend_schema(tags=["Testing"])
+class OpenAiTestView(GenericAPIView):
+    serializer_class = OpenAiTestSerializer
+
+    def post(self, request, id):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        feature = serializer.validated_data["feature"]
+
+        session = ChatSession.objects.get(id=id)
+        pipeline = Pipeline(session.auth_token)
+
+        if feature == "Customer Segmentation":
+            bot_message = pipeline.run_customer_segmentation()
+        else:
+            bot_message = "Feature not implemented yet."
+
+        return Response(
+            {"message": bot_message},
+            status=status.HTTP_200_OK,
+        )

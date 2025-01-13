@@ -28,3 +28,12 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatMessage
         fields = "__all__"
+
+
+class OpenAiTestSerializer(serializers.Serializer):
+    feature = serializers.ChoiceField(
+        choices=[
+            ("Customer Segmentation", "Customer Segmentation"),
+            ("Product Preference", "Product Preference"),
+        ]
+    )
