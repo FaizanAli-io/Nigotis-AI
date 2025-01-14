@@ -33,7 +33,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 class OpenAiTestSerializer(serializers.Serializer):
     feature = serializers.ChoiceField(
         choices=[
-            ("Customer Segmentation", "Customer Segmentation"),
-            ("Product Preference", "Product Preference"),
+            ("1", "Customer Segmentation"),
+            ("2", "Product Preference"),
         ]
     )

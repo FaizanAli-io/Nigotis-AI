@@ -131,10 +131,14 @@ class OpenAiTestView(GenericAPIView):
         session = ChatSession.objects.get(id=id)
         pipeline = Pipeline(session.auth_token)
 
-        if feature == "Customer Segmentation":
+        if feature == "1":
             bot_message = pipeline.run_customer_segmentation()
+        elif feature == "2":
+            bot_message = pipeline.run_product_preference()
         else:
             bot_message = "Feature not implemented yet."
+
+        print(bot_message)
 
         return Response(
             {"message": bot_message},

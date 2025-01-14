@@ -1,7 +1,7 @@
 import requests
 
 
-class Handler:
+class Fetcher:
     def __init__(self, auth_token):
         self.auth_token = auth_token
 
