@@ -43,6 +43,40 @@ class Responder:
         return Responder.get_gpt_response(prompt, max_words)
 
     @staticmethod
+    def analyze_revenue_insights(revenue_data, max_words=300):
+        prompt = (
+            "You are a business analyst. I have data on customer revenue showing top clients based on the total value of their purchases. "
+            "Here is the data:\n\n"
+        )
+        for client in revenue_data["top_clients"]:
+            prompt += f"Client: {client['name']}\nTotal Revenue: {client['total_revenue']}\n\n"
+
+        prompt += "Please analyze the data and provide insights on the high-value clients, how to nurture relationships with them, and any other patterns you observe in customer revenue behavior."
+
+        return Responder.get_gpt_response(prompt, max_words)
+
+    @staticmethod
+    def analyze_purchase_value(purchase_value_data, max_words=300):
+        prompt = (
+            "You are a business strategist. I have data on customer purchase sizes and value, including high-value and low-value clients. "
+            "Here is the data:\n\n"
+        )
+        prompt += "High Value:\n"
+        for client in purchase_value_data["high_value_clients"]:
+            prompt += f"Client: {client['name']}\nAverage Transaction: {client['avg_transaction_value']}\nTotal Value: {client['total_transaction_value']}\n\n"
+
+        prompt += "Low Value:\n"
+        for client in purchase_value_data["low_value_clients"]:
+            prompt += f"Client: {client['name']}\nAverage Transaction: {client['avg_transaction_value']}\nTotal Value: {client['total_transaction_value']}\n\n"
+
+        prompt += (
+            "Please analyze the data and provide actionable insights on upselling strategies for high-value clients, "
+            "and how to promote budget-friendly options to low-value clients. Also, provide strategies for increasing transaction values."
+        )
+
+        return Responder.get_gpt_response(prompt, max_words)
+
+    @staticmethod
     def get_gpt_response(prompt, max_words):
         key = os.getenv("OPENAI_API_KEY")
         client = OpenAI(api_key=key)
