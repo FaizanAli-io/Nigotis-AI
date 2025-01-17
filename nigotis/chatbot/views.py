@@ -126,25 +126,14 @@ class OpenAiTestView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        feature = serializer.validated_data["feature"]
-
         session = ChatSession.objects.get(id=id)
         pipeline = Pipeline(session.auth_token)
 
-        if feature == "0":
-            bot_message = "We are working on that"
-        elif feature == "1":
-            bot_message = pipeline.run_customer_segmentation()
-        elif feature == "2":
-            bot_message = pipeline.run_product_preference()
-        elif feature == "3":
-            bot_message = pipeline.run_revenue_insights()
-        elif feature == "4":
-            bot_message = pipeline.run_purchase_value()
-        else:
-            bot_message = "Feature not implemented yet."
+        feature = serializer.validated_data["feature"]
+        bot_message = pipeline.run_analysis_func(feature)
 
-        print(bot_message)
+        with open("dump.txt", "w") as f:
+            f.write(bot_message)
 
         return Response(
             {"message": bot_message},

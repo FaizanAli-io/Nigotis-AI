@@ -1,4 +1,6 @@
 import numpy as np
+from datetime import datetime
+from collections import defaultdict
 
 
 class Reducer:
@@ -42,8 +44,8 @@ class Reducer:
                 "name": customer["name"],
                 "top_product": {
                     "name": top_product["name"],
-                    "description": top_product["description"],
                     "quantity": top_product["quantity"],
+                    "description": top_product["description"],
                 },
             }
 
@@ -111,3 +113,100 @@ class Reducer:
             "high_value_clients": high_value_clients,
             "low_value_clients": low_value_clients,
         }
+
+    @staticmethod
+    def seasonal_trends(invoices):
+        monthly_sales = defaultdict(int)
+
+        for invoice in invoices:
+            issue_date = datetime.strptime(invoice["issueDate"], "%d-%m-%Y")
+            month = issue_date.strftime("%Y-%m")
+            for product in invoice["products"]:
+                monthly_sales[month] += product["quantity"] * product["price"]
+
+        return dict(monthly_sales)
+
+    @staticmethod
+    def client_lifetime_value(customers):
+        client_ltv = {}
+
+        for customer in customers:
+            client_name = customer["name"]
+            total_value = 0
+            for product in customer["products"]:
+                total_value += product["quantity"] * product["price"]
+            client_ltv[client_name] = total_value
+
+        return client_ltv
+
+    @staticmethod
+    def inactive_clients(invoices):
+        inactive_clients = []
+        client_last_purchase = {}
+        current_date = datetime.now()
+        inactivity_threshold_days = 90
+
+        for invoice in invoices:
+            issue_date = datetime.strptime(invoice["issueDate"], "%d-%m-%Y")
+            client_name = invoice["client_name"]
+
+            if (
+                client_name not in client_last_purchase
+                or issue_date > client_last_purchase[client_name]["issue_date"]
+            ):
+                last_products = [product["name"] for product in invoice["products"]]
+                client_last_purchase[client_name] = {
+                    "issue_date": issue_date,
+                    "last_products": last_products,
+                }
+
+        for client_name, data in client_last_purchase.items():
+            days_inactive = (current_date - data["issue_date"]).days
+            if days_inactive > inactivity_threshold_days:
+                inactive_clients.append(
+                    {
+                        "client_name": client_name,
+                        "days_inactive": days_inactive,
+                        "last_products": data["last_products"],
+                    }
+                )
+
+        return inactive_clients
+
+    @staticmethod
+    def most_purchased_products(products):
+        product_sales = defaultdict(int)
+
+        for product in products:
+            for client in product["clients"]:
+                product_sales[product["name"]] += client["quantity"]
+
+        sorted_products = sorted(
+            product_sales.items(),
+            key=lambda x: x[1],
+            reverse=True,
+        )
+        return sorted_products
+
+    @staticmethod
+    def product_recommendations(customers):
+        client_recommendations = {}
+
+        for customer in customers:
+            client_name = customer["name"]
+            product_frequency = defaultdict(int)
+
+            for product in customer["products"]:
+                product_frequency[product["name"]] += 1
+
+            sorted_products = sorted(
+                product_frequency.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            client_recommendations[client_name] = [
+                f"{i+1}. {product}"
+                for i, (product, _) in enumerate(sorted_products[:3])
+            ]
+
+        return client_recommendations

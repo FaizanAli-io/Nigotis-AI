@@ -21,6 +21,7 @@ class Mapper:
             customer_id = client["_id"]
             if customer_id not in customers:
                 customers[customer_id] = {
+                    "id": customer_id,
                     "name": Mapper.extract_client_name(client),
                     "products": [],
                 }
@@ -31,6 +32,7 @@ class Mapper:
                     {
                         "name": product["name"],
                         "price": product["price"],
+                        "description": product["desc"],
                         "quantity": item["quantity"],
                     }
                 )

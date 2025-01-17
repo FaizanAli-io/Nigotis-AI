@@ -26,3 +26,15 @@ class Fetcher:
     def get_client_invoices(self):
         url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
         return self._make_request(url)
+
+    def get_incomes(self):
+        url = "https://nigotis-be.vercel.app/api/v1/income"
+        return self._make_request(url)
+
+    def get_expenses(self):
+        url = "https://nigotis-be.vercel.app/api/v1/company/expense"
+        return self._make_request(url)
+
+    def get_assets(self):
+        url = "https://nigotis-be.vercel.app/api/v1/company/asset"
+        return self._make_request(url)
