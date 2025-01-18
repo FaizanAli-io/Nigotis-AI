@@ -205,8 +205,7 @@ class Reducer:
                 reverse=True,
             )
             client_recommendations[client_name] = [
-                f"{i+1}. {product}"
-                for i, (product, _) in enumerate(sorted_products[:3])
+                product for product, _ in sorted_products[:3]
             ]
 
         return client_recommendations

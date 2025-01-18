@@ -45,3 +45,14 @@ class OpenAiTestSerializer(serializers.Serializer):
             ("TPR", "Tailored Promotions"),
         ]
     )
+    message = serializers.CharField(
+        allow_null=True,
+        required=False,
+    )
+
+    def validate(self, data):
+        if data["feature"] == "GEN" and not data.get("message"):
+            raise serializers.ValidationError(
+                {"message": "Message must be populated if feature is 'GEN'."}
+            )
+        return data
