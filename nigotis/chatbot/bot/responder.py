@@ -1,32 +1,6 @@
-import os
-from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
 class Responder:
     @staticmethod
-    def get_gpt_response(prompt, max_words):
-        key = os.getenv("OPENAI_API_KEY")
-        client = OpenAI(api_key=key)
-
-        max_tokens = max_words * 4
-
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt},
-            ],
-            max_tokens=max_tokens,
-            temperature=0.7,
-        )
-
-        return response.choices[0].message.content.strip()
-
-    @staticmethod
-    def analyze_segmentation(segmentation_data, max_words=300):
+    def analyze_segmentation(segmentation_data):
         prompt = (
             "You are a business analyst. I have data on customer purchase frequencies segmented into high, "
             "medium, and low frequency groups. Present the data in a clear and structured way, then analyze it. "
@@ -43,10 +17,10 @@ class Responder:
             "for each group (high, medium, low frequency). Make the analysis user-friendly and actionable."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_product_preferences(preferences_data, max_words=300):
+    def analyze_product_preferences(preferences_data):
         prompt = (
             "You are a product analyst. I have data on customer product preferences showing each customer's top product "
             "based on quantity purchased. Present the data in a structured format, then analyze it. Here is the data:\n\n"
@@ -60,10 +34,10 @@ class Responder:
             "and strategies for product-related marketing or upselling. Make the analysis user-friendly and actionable."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_revenue_insights(revenue_data, max_words=300):
+    def analyze_revenue_insights(revenue_data):
         prompt = (
             "You are a business analyst. I have data on customer revenue showing top clients based on the total value of their purchases. "
             "Present the data in a structured format, then analyze it. Here is the data:\n\n"
@@ -73,10 +47,10 @@ class Responder:
 
         prompt += "After presenting the data, provide insights on the high-value clients, how to nurture relationships with them, and any patterns in customer revenue behavior."
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_purchase_value(purchase_value_data, max_words=300):
+    def analyze_purchase_value(purchase_value_data):
         prompt = (
             "You are a business strategist. I have data on customer purchase sizes and value, including high-value and low-value clients. "
             "Present the data in a structured format, then analyze it. Here is the data:\n\n"
@@ -94,10 +68,10 @@ class Responder:
             "and how to promote budget-friendly options to low-value clients. Also, provide strategies for increasing transaction values."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_seasonal_trends(seasonal_trends_data, max_words=300):
+    def analyze_seasonal_trends(seasonal_trends_data):
         prompt = (
             "You are a business strategist. I have data on seasonal trends for client purchases over time. "
             "Present the data in a structured format, then analyze it. Here is the data for monthly sales:\n\n"
@@ -110,10 +84,10 @@ class Responder:
             "and how to sustain or grow sales during off-peak seasons."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_client_lifetime_value(client_ltv_data, max_words=300):
+    def analyze_client_lifetime_value(client_ltv_data):
         prompt = (
             "You are a business strategist. I have data on client lifetime values based on their purchase history. "
             "Present the data in a structured format, then analyze it. Here is the data:\n\n"
@@ -126,10 +100,10 @@ class Responder:
             "and how to increase lifetime value for clients with lower values."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_churn_prediction(inactive_clients_data, max_words=300):
+    def analyze_churn_prediction(inactive_clients_data):
         prompt = (
             "You are a business strategist. I have data on clients who have become inactive based on their purchase activity. "
             "Present the data in a structured format, then analyze it. Here is the data for inactive clients:\n\n"
@@ -146,10 +120,10 @@ class Responder:
             "including personalized outreach strategies, promotions, and product suggestions."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_most_purchased_products(most_purchased_data, max_words=300):
+    def analyze_most_purchased_products(most_purchased_data):
         prompt = (
             "You are a business strategist. I have data on the most purchased products by clients. "
             "Present the data in a structured format, then analyze it. Here is the data for the most popular products:\n\n"
@@ -162,10 +136,10 @@ class Responder:
             "including cross-selling and upselling strategies, and how to use customer data to personalize offers."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt
 
     @staticmethod
-    def analyze_tailored_promotions(client_recommendations_data, max_words=300):
+    def analyze_tailored_promotions(client_recommendations_data):
         prompt = (
             "You are a business strategist. I have data on personalized product recommendations for clients. "
             "Present the data in a structured format, then analyze it. Here is the data for recommended products:\n\n"
@@ -178,4 +152,4 @@ class Responder:
             "including product bundles, discounts, and targeted campaigns to increase client engagement and purchases."
         )
 
-        return Responder.get_gpt_response(prompt, max_words)
+        return prompt

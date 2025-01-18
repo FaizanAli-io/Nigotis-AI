@@ -1,23 +1,24 @@
-from .agent import Agent
 from .mapper import Mapper
 from .reducer import Reducer
 from .responder import Responder
-
-import json
+from .agent import BaseAgent, LlamaAgent
 
 
 class Pipeline:
     def __init__(self, auth_token):
         self.mapper = Mapper(auth_token)
+        self.base_agent = BaseAgent()
+        self.llama_agent = LlamaAgent(self.mapper)
 
     def _process_data(self, map_func, reduce_func, analyze_func):
         mapped = map_func()
         reduced = reduce_func(mapped)
-        return analyze_func(reduced)
+        prompt = analyze_func(reduced)
+
+        return self.base_agent.get_response(prompt)
 
     def run_generic_question(self, message):
-        agent = Agent(self.mapper)
-        return agent.get_response(message)
+        return self.llama_agent.get_response(message)
 
     def run_customer_segmentation(self):
         return self._process_data(
