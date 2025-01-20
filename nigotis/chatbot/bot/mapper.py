@@ -28,7 +28,7 @@ class Mapper:
             print(f"Request failed: {e}")
             return None
 
-    def map_customers(self):
+    def get_customers(self):
         url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
         invoices = self._make_request(url)
 
@@ -56,7 +56,7 @@ class Mapper:
 
         return list(customers.values())
 
-    def map_products(self):
+    def get_products(self):
         url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
         invoices = self._make_request(url)
 
@@ -85,7 +85,7 @@ class Mapper:
 
         return list(products.values())
 
-    def map_invoices(self):
+    def get_invoices(self):
         url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
         invoices = self._make_request(url)
 
@@ -110,7 +110,7 @@ class Mapper:
 
         return cleaned_invoices
 
-    def map_income(self):
+    def get_income(self):
         url = "https://nigotis-be.vercel.app/api/v1/income"
         incomes = self._make_request(url)
 
@@ -128,7 +128,7 @@ class Mapper:
 
         return cleaned_incomes
 
-    def map_expenses(self):
+    def get_expenses(self):
         url = "https://nigotis-be.vercel.app/api/v1/company/expense"
         expenses = self._make_request(url)
 
@@ -148,7 +148,7 @@ class Mapper:
 
         return cleaned_expenses
 
-    def map_assets(self):
+    def get_assets(self):
         url = "https://nigotis-be.vercel.app/api/v1/company/asset"
         assets = self._make_request(url)
 

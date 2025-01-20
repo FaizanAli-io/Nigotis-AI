@@ -131,13 +131,17 @@ class OpenAiTestView(GenericAPIView):
 
         feature = serializer.validated_data["feature"]
 
-        if feature == "GEN":
-            message = serializer.validated_data["message"]
-            bot_message = pipeline.run_generic_question(message)
-        else:
-            bot_message = pipeline.run_analysis_func(feature)
+        try:
+            if feature == "GEN":
+                message = serializer.validated_data["message"]
+                bot_message = pipeline.run_generic_question(message)
+            else:
+                bot_message = pipeline.run_analysis_func(feature)
+        except Exception as e:
+            bot_message = e
 
-        with open("dump.txt", "w") as f:
+        dumpname = message if feature == "GEN" else feature
+        with open(f"dump/{dumpname}.txt", "w") as f:
             f.write(bot_message)
 
         return Response(

@@ -1,0 +1,8 @@
+django
+drf_spectacular
+django-cors-headers
+djangorestframework
+
+openai
+llama_index
+python-dotenv

@@ -1,12 +1,8 @@
-from dotenv import load_dotenv
+from openai import OpenAI
 from llama_index.core import Settings
 from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai import OpenAI as LlamaOpenAI
-
-from openai import OpenAI
-
-load_dotenv()
 
 
 class BaseAgent:
@@ -24,7 +20,7 @@ class BaseAgent:
             ],
         )
 
-        return response.choices[0].message.content.strip()
+        return response.choices[0].message.content
 
 
 class LlamaAgent:
@@ -32,12 +28,12 @@ class LlamaAgent:
         toolkit = [
             FunctionTool.from_defaults(fn=func)
             for func in [
-                mapper.map_customers,
-                mapper.map_products,
-                mapper.map_invoices,
-                mapper.map_income,
-                mapper.map_expenses,
-                mapper.map_assets,
+                mapper.get_customers,
+                mapper.get_products,
+                mapper.get_invoices,
+                mapper.get_income,
+                mapper.get_expenses,
+                mapper.get_assets,
             ]
         ]
 
@@ -45,4 +41,4 @@ class LlamaAgent:
         self.agent = ReActAgent.from_tools(toolkit, verbose=True)
 
     def get_response(self, query):
-        return self.agent.chat(query)
+        return self.agent.chat(query).response
