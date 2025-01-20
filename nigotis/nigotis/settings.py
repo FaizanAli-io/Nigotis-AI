@@ -11,10 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 import os
-
 from pathlib import Path
-
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 load_dotenv()
 
@@ -78,6 +77,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "nigotis.wsgi.application"
 
+# Database settings
+tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": tmpPostgres.path.replace("/", ""),
+        "USER": tmpPostgres.username,
+        "PASSWORD": tmpPostgres.password,
+        "HOST": tmpPostgres.hostname,
+        "PORT": 5432,
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
