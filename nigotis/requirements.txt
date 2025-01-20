@@ -1,3 +1,5 @@
+db-sqlite3
+
 django
 drf_spectacular
 django-cors-headers
