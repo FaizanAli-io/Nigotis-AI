@@ -21,7 +21,6 @@ from .bot.pipeline import Pipeline
 
 @extend_schema(tags=["Session"])
 class ChatSessionViewSet(ModelViewSet):
-    http_method_names = ["post"]
     queryset = ChatSession.objects.all()
     serializer_class = ChatSessionSerializer
 
@@ -112,7 +111,6 @@ class CheckAuthTokenView(GenericAPIView):
 
 @extend_schema(tags=["Message"])
 class ChatMessageViewSet(ModelViewSet):
-    http_method_names = ["post"]
     queryset = ChatMessage.objects.all()
     serializer_class = ChatMessageSerializer
 
