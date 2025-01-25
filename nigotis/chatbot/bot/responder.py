@@ -112,7 +112,7 @@ class Responder:
             prompt += (
                 f"Client: {client['client_name']}\n"
                 f"Duration of Inactivity: {client['days_inactive']} days\n"
-                f"Last Purchased Products: {", ".join(client['last_products'])}\n\n"
+                f"Last Purchased Products: {', '.join(client['last_products'])}\n\n"
             )
 
         prompt += (
