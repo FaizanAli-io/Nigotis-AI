@@ -1,8 +1,6 @@
 import requests
 from datetime import datetime
 
-import json
-
 
 class Mapper:
     def __init__(self, auth_token):
@@ -51,6 +49,7 @@ class Mapper:
                         "price": product["price"],
                         "description": product["desc"],
                         "quantity": item["quantity"],
+                        "issueDate": Mapper.format_date(invoice["issueDate"]),
                     }
                 )
 
@@ -110,7 +109,7 @@ class Mapper:
 
         return cleaned_invoices
 
-    def get_income(self):
+    def get_incomes(self):
         url = "https://nigotis-be.vercel.app/api/v1/income"
         incomes = self._make_request(url)
 
