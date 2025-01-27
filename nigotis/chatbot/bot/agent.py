@@ -14,8 +14,8 @@ class BaseAgent:
     def get_response(self, prompt):
         response = self.client.chat.completions.create(
             model="gpt-4o-mini",
-            temperature=0.7,
-            max_tokens=800,
+            temperature=0.75,
+            max_tokens=1024,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt},
@@ -27,7 +27,12 @@ class BaseAgent:
 
 class LlamaAgent:
     def __init__(self, mapper):
-        Settings.llm = LlamaOpenAI(model="gpt-4o-mini", temperature=0)
+        Settings.llm = LlamaOpenAI(
+            temperature=0,
+            max_retries=2,
+            max_tokens=2048,
+            model="gpt-4o-mini",
+        )
 
         toolkit = self.define_toolkit(mapper)
 
@@ -39,7 +44,7 @@ class LlamaAgent:
                 "1. First, determine if any data retrieval is necessary based on the user's query. "
                 "2. After retrieving data, analyze whether any filtering or further processing is required. "
                 "3. Finally, provide a detailed and verbose output of the resultant data. "
-                "Be mindful to avoid redundant data retrieval and ensure that filtration is applied only when needed."
+                "Be mindful to avoid redundant data retrieval and ensure that filtration is applied only when needed. Respond strictly in English."
             ),
         )
 
