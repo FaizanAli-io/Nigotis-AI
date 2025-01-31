@@ -1,5 +1,21 @@
 from datetime import datetime
 
+ENTITIES = [
+    "customers",
+    "products",
+    "invoices",
+    "expenses",
+    "incomes",
+    "assets",
+    "payrolls",
+]
+
+
+def fetch_data(mapper, entity):
+    if entity not in ENTITIES:
+        raise ValueError(f"Invalid entity: {entity}")
+    return getattr(mapper, f"get_{entity}")()
+
 
 def filter_by_date(
     data_array,

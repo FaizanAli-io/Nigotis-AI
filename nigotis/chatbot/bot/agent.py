@@ -4,7 +4,11 @@ from llama_index.core.agent import ReActAgent
 from llama_index.core.tools import FunctionTool
 from llama_index.llms.openai import OpenAI as LlamaOpenAI
 
-from .tools import filter_by_date
+from .tools import (
+    ENTITIES,
+    fetch_data,
+    filter_by_date,
+)
 
 
 class BaseAgent:
@@ -49,21 +53,11 @@ class LlamaAgent:
         )
 
     def define_toolkit(self, mapper):
-        toolkit = [
-            FunctionTool.from_defaults(
-                fn=func,
-                name=func.__name__,
-                description=f"Use {func.__name__} to retrieve relevant data.",
-            )
-            for func in [
-                mapper.get_customers,
-                mapper.get_products,
-                mapper.get_invoices,
-                mapper.get_expenses,
-                mapper.get_incomes,
-                mapper.get_assets,
-            ]
-        ]
+        fetch_data_tool = FunctionTool.from_defaults(
+            fn=lambda entity: fetch_data(mapper, entity),
+            name="fetch_data",
+            description=f"Use this to retrieve data for an entity. Available entities: {', '.join(ENTITIES)}.",
+        )
 
         filter_tool = FunctionTool.from_defaults(
             fn=filter_by_date,
@@ -76,9 +70,7 @@ class LlamaAgent:
             ),
         )
 
-        toolkit.append(filter_tool)
-
-        return toolkit
+        return [fetch_data_tool, filter_tool]
 
     def get_response(self, query):
         try:

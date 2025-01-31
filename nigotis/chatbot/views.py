@@ -50,7 +50,7 @@ class ChatSessionViewSet(ModelViewSet):
 
             data = response_data.get("data", {})
             session = ChatSession.objects.create(
-                name=f"{data['personalInfo']['firstName']} {data['personalInfo']['lastName']}",
+                name=f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}",
                 role=data["role"].upper(),
                 login_email=login_email,
                 login_password=login_password,

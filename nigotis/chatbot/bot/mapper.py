@@ -12,9 +12,9 @@ class Mapper:
         return date_obj.strftime("%d-%m-%Y")
 
     @staticmethod
-    def extract_client_name(client):
+    def extract_name(client):
         info = client["personalInfo"]
-        return f"{info['title']} {info['firstName']} {info['lastName']}"
+        return f"{info['title']} {info['firstName']} {info.get('lastName', '')}"
 
     def _make_request(self, url):
         try:
@@ -37,7 +37,7 @@ class Mapper:
             if customer_id not in customers:
                 customers[customer_id] = {
                     "id": customer_id,
-                    "name": Mapper.extract_client_name(client),
+                    "name": Mapper.extract_name(client),
                     "products": [],
                 }
 
@@ -62,7 +62,7 @@ class Mapper:
         products = {}
         for invoice in invoices:
             client = invoice["clientId"]
-            client_name = Mapper.extract_client_name(client)
+            name = Mapper.extract_name(client)
 
             for item in invoice["items"]:
                 product = item["productId"]
@@ -76,10 +76,7 @@ class Mapper:
                     }
 
                 products[product_id]["clients"].append(
-                    {
-                        "client_name": client_name,
-                        "quantity": item["quantity"],
-                    }
+                    {"name": name, "quantity": item["quantity"]}
                 )
 
         return list(products.values())
@@ -92,7 +89,7 @@ class Mapper:
         for invoice in invoices:
             cleaned_invoices.append(
                 {
-                    "client_name": Mapper.extract_client_name(invoice["clientId"]),
+                    "name": Mapper.extract_name(invoice["clientId"]),
                     "issueDate": Mapper.format_date(invoice["issueDate"]),
                     "dueDate": Mapper.format_date(invoice["dueDate"]),
                     "status": invoice["status"],
@@ -164,3 +161,43 @@ class Mapper:
             )
 
         return cleaned_assets
+
+    def get_payrolls(self):
+        url = "https://nigotis-be.vercel.app/api/v1/user"
+        employees = self._make_request(url)
+
+        cleaned_payrolls = []
+        for employee in employees:
+            jobInfo = employee.get("jobInfo", {})
+            payInfo = jobInfo.get("payrollId")
+
+            cleaned_payrolls.append(
+                {
+                    "name": Mapper.extract_name(employee),
+                    "department": jobInfo.get("department", "N/A"),
+                    "jobRole": jobInfo.get("jobRole", "N/A"),
+                    "role": employee.get("role", "N/A"),
+                }
+                | (
+                    {
+                        "salary": payInfo.get("salary", 0),
+                        "hourlyRate": payInfo.get("hourlyRate", 0),
+                        "overtimeHourlyRate": payInfo.get("overtimeHourlyRate", 0),
+                        "salaryType": payInfo.get("salaryType", 0),
+                        "bonus": str(payInfo.get("bonus", 0)) + "%",
+                        "tax": str(payInfo.get("tax", 0)) + "%",
+                    }
+                    if payInfo
+                    else {"SalaryData": "No salary data"}
+                )
+            )
+
+        return cleaned_payrolls
+
+
+# if __name__ == "__main__":
+#     import json
+
+#     key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGI1YmZiYWFhNTlkMmRlYTRjOTE1MiIsImlhdCI6MTczODM0OTQ0MywiZXhwIjoxNzQwOTQxNDQzfQ.AF3yIvw8g3nWHQq8QvcZmXLJyPm-g38hjDn1_raCahQ"
+
+#     print(json.dumps(Mapper(key).get_payrolls(), indent=2))
