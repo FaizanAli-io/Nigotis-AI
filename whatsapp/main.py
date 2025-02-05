@@ -63,9 +63,9 @@ def send_message(data):
 # print(response.json())
 
 
-# response = send_message(
-#     get_text_message_input(
-#         recipient=RECIPIENT_WAID,
-#         text="I love Syed Bilal.",
-#     )
-# )
+response = send_message(
+    get_text_message_input(
+        recipient=RECIPIENT_WAID,
+        text="Sent with perma token.",
+    )
+)
