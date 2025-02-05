@@ -6,13 +6,10 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from django.http import HttpResponse
 
 
-def verify(request):
-    challenge = request.GET.get("hub.challenge")
-    return HttpResponse(challenge, status=200)
 
 
 urlpatterns = [
-    path("webhook/", verify),
+    path("webhook/", include("whatsapp.urls")),
     path("admin/", admin.site.urls),
     path("chat/", include("chatbot.urls")),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
