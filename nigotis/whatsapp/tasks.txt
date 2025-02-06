@@ -1,0 +1,3 @@
+1. Create a template which allows the user to choose which specific analysis task he wants to run.
+2. Once the user has chosen which task he wants to run, the relevant function will be called, and the openai output will be displayed in the chat.
+3. Store all the user and bot messages in the Message Model, and use the last `n` messages to form a conversational history.
