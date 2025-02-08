@@ -76,8 +76,55 @@ def send_message(data):
     return response_json
 
 
+
+def get_login_detail_message():
+    template = """
+    🔒 Login Required 🔒
+    
+    Please provide your login details:
+    - Email: [Your Email Address]
+    - Password: [Your Password]
+
+    Example:
+    ```
+    Email: example@example.com
+    Password: ********
+    ```
+    
+    Ensure that your credentials are correct to proceed.
+    """
+    return template
+
+def welcome_login_message(name):
+
+    response_message = f"""
+✅ Login Successful! Welcome to Nigotis-AI, {name}. 🚀
+
+You can now:
+- Use **#options** to view and run available analysis options.
+- Use **#logout** to securely log out of your session.
+
+Let me know how I can assist you!
+"""
+    return response_message
+
+def get_logout_message():
+    response_message="""👋 Goodbye, 
+
+You have successfully logged out of your session. 🛡️
+
+If you need further assistance, feel free to log in again anytime.
+
+Use **#login** to log back into your account.
+
+Stay safe and have a great day! 🚀"""
+    return response_message
+    
 # Example usage
-recipient_number = "923132680496"  # Replace with actual recipient number
-interactive_message = get_interactive_list_message(recipient_number)
-send_message(interactive_message)
+recipient_number = "923353633400"  # Replace with actual recipient number
+
+#interactive_message = get_login_interactive_message(recipient_number)
+#send_message(interactive_message)
+
+
 

@@ -16,6 +16,7 @@ class ChatSessionSerializer(serializers.ModelSerializer):
             "role",
             "login_email",
             "auth_token",
+            "phone_number",
             "authenticated_at",
             "created_at",
             "updated_at",

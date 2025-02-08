@@ -20,10 +20,11 @@ class ChatSession(BaseModel):
 
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    login_email = models.EmailField()
-    login_password = models.CharField(max_length=255)
-    auth_token = models.CharField(max_length=255)
-    authenticated_at = models.DateTimeField(auto_now_add=True)
+    login_email = models.EmailField(null=True, blank=True)
+    login_password = models.CharField(max_length=255,null=True, blank=True)
+    auth_token = models.CharField(max_length=255, null=True, blank=True) 
+    phone_number = models.CharField(max_length=20, null=True, blank=True)  
+    authenticated_at = models.DateTimeField(null=True, blank=True)
 
 
 class ChatMessage(BaseModel):
@@ -34,6 +35,7 @@ class ChatMessage(BaseModel):
 
     sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
     content = models.TextField()
+    unique_message_id=models.TextField()
     session = models.ForeignKey(
         ChatSession,
         related_name="messages",
