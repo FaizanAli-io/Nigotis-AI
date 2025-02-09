@@ -8,9 +8,6 @@ from .test2 import welcome_login_message
 
 from chatbot.models import ChatMessage, ChatSession
 
-# from chatbot.models import ChatMessage
-# from chatbot.bot.pipeline import Pipeline
-
 # Load environment variables
 load_dotenv()
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
@@ -47,7 +44,7 @@ def send_message(data):
         return response
 
 
-def authenticate_user(email,password,sender_id):
+def authenticate_user(email, password, sender_id):
     try:
         response = requests.post(
             "https://nigotis-be.vercel.app/api/v1/user/login",
@@ -57,11 +54,11 @@ def authenticate_user(email,password,sender_id):
         response_data = response.json()
 
         if response.status_code != 200 or not response_data.get("success"):
-            return  "Authentication failed"
-        
+            return "Authentication failed"
+
         # Extract user data from response
         data = response_data.get("data", {})
-        
+
         # Store user session in the database
         session = ChatSession.objects.filter(phone_number=sender_id).first()
         if session:
