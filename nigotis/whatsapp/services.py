@@ -8,7 +8,12 @@ import threading
 from dotenv import load_dotenv
 from rest_framework import status
 from django.utils.timezone import now
-from chatbot.models import ChatSession
+from chatbot.models import ChatMessage, ChatSession
+
+from llama_index.core.llms import ChatMessage as ChatMessageModel, MessageRole
+from llama_index.core.memory import ChatSummaryMemoryBuffer
+from llama_index.llms.openai import OpenAI as OpenAiLlm
+import tiktoken
 
 # Load environment variables
 load_dotenv()
@@ -237,3 +242,46 @@ def run_scheduler():
     scheduler_thread = threading.Thread(target=scheduled_task, daemon=True)
     scheduler_thread.start()
     print("🟢 Background scheduler thread started.")
+
+
+def get_chat_history(phone_number):
+    try:
+
+        session = ChatSession.objects.get(phone_number=phone_number)
+        
+        messages = ChatMessage.objects.filter(session=session).order_by('-created_at')[:10]
+        
+        messages = list(messages)[::-1]
+        chat_history = [
+            ChatMessageModel(
+                role=MessageRole.USER if msg.sender == "USER" else MessageRole.ASSISTANT,
+                content=msg.content
+            )
+            for msg in messages
+        ]
+        print(chat_history)
+        os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+        model = "gpt-4o-mini"
+        summarizer_llm = OpenAiLlm(model_name=model, max_tokens=256)
+        tokenizer_fn = tiktoken.encoding_for_model(model).encode
+        memory = ChatSummaryMemoryBuffer.from_defaults(
+            chat_history=chat_history,
+            llm=summarizer_llm,
+            token_limit=50,
+            tokenizer_fn=tokenizer_fn,
+        )
+
+        history = memory.get()
+        formatted_history = "\n".join(
+        [f"{msg.role.value.capitalize()}: {msg.content}" for msg in history]
+    )
+        print(formatted_history)
+
+        return formatted_history
+        #print("Chat history\n")
+        #print(history)
+       # return chat_history
+
+    except Exception as e:
+        print(f"Error retrieving chat history: {e}")
+        return []

@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from chatbot.bot.pipeline import Pipeline
 from .services import (get_text_message_input, send_message, authenticate_user,get_interactive_list_message,
     get_login_detail_message,
-    get_logout_message, run_scheduler)
+    get_logout_message, get_chat_history,run_scheduler)
 from chatbot.models import ChatMessage, ChatSession
 
 
@@ -194,36 +194,24 @@ def webhook(request):
 
                     # Handle generic text questions
                     if incoming_text:
-                        ChatMessage.objects.create(
-                            sender="USER",
-                            content=incoming_text,
-                            unique_message_id=unique_message_id,
-                            session=session,
-                        )
-
+                    
+                        chatHistory=get_chat_history(sender_id)
+                        final_message = f"**You are a helpful AI assistant. Maintain conversation context. Chat History:**\n{chatHistory}\n\n**User's new Message:**\n{incoming_text}"
                         pipeline_instance = Pipeline(AUTH_TOKEN)
-                        function_result = pipeline_instance.run_generic_question(
-                            incoming_text
-                        )
-
+                        function_result = pipeline_instance.run_generic_question(final_message)
+                        
+                        ChatMessage.objects.create(sender="USER", content=incoming_text,unique_message_id=unique_message_id ,session=session)
                         print(function_result)
 
-                        function_result = function_result[:4096]
-                        message_data = get_text_message_input(
-                            sender_id, function_result
-                        )
-                        send_message(message_data)
-                        ChatMessage.objects.create(
-                            sender="BOT",
-                            content=function_result,
-                            unique_message_id="",
-                            session=session,
-                        )
 
-                        return JsonResponse(
-                            {"status": "success", "message": "Analysis executed"},
-                            status=200,
-                        )
+                    
+                        function_result = function_result[:4096]
+                        message_data = get_text_message_input(sender_id, function_result)
+                        send_message(message_data)
+                        ChatMessage.objects.create(sender="BOT", content=function_result,unique_message_id="" ,session=session)
+
+                        return JsonResponse({"status": "success", "message": "Analysis executed"}, status=200)
+
 
                 elif not ChatSession.objects.filter(phone_number=sender_id).exists():
                     ChatSession.objects.create(phone_number=sender_id)
