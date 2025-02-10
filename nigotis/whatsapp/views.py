@@ -1,15 +1,14 @@
 import re
 import json
+import threading
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from chatbot.bot.pipeline import Pipeline
-from .services import get_text_message_input, send_message, authenticate_user
-from chatbot.models import ChatMessage, ChatSession
-from .test2 import (
-    get_interactive_list_message,
+from .services import (get_text_message_input, send_message, authenticate_user,get_interactive_list_message,
     get_login_detail_message,
-    get_logout_message,
-)
+    get_logout_message, run_scheduler)
+from chatbot.models import ChatMessage, ChatSession
+
 
 
 @csrf_exempt
@@ -260,3 +259,7 @@ def webhook(request):
             )
 
     return HttpResponse("Method not allowed", status=405)
+
+if not threading.active_count() <= 1:
+    print("🟢 Starting background scheduler thread...")
+    run_scheduler() 
