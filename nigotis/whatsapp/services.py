@@ -6,13 +6,12 @@ import schedule
 import requests
 import threading
 from dotenv import load_dotenv
-from rest_framework import status
 from django.utils.timezone import now
 from chatbot.models import ChatMessage, ChatSession
 
-from llama_index.core.llms import ChatMessage as ChatMessageModel, MessageRole
-from llama_index.core.memory import ChatSummaryMemoryBuffer
 from llama_index.llms.openai import OpenAI as OpenAiLlm
+from llama_index.core.memory import ChatSummaryMemoryBuffer
+from llama_index.core.llms import ChatMessage as ChatMessageModel, MessageRole
 import tiktoken
 
 # Load environment variables
@@ -151,6 +150,8 @@ def get_interactive_list_message(recipient):
             },
         }
     )
+
+
 def get_login_detail_message():
     template = """
     🔒 Login Required 🔒
@@ -200,33 +201,37 @@ Stay safe and have a great day! 🚀"""
 def send_greeting_message():
     """Send a scheduled message to all authenticated clients at 9 AM."""
     messages = [
-    "🌟 Wishing you a fantastic and productive day ahead! Stay positive and keep moving forward. I'm available if you need any help.",
-    "✨ Hope today brings you success, happiness, and new opportunities! Let me know if there's anything I can assist you with.",
-    "💡 Stay motivated and keep pushing towards your goals—great things are coming your way! I'm here if you need any support.",
-    "🚀 A fresh day, a fresh start! Make the most of every moment. If you need any help, feel free to reach out.",
-    "🌼 Sending you good vibes and positivity—may your day be amazing! Let me know if you need any assistance.",
-    "🔥 Believe in yourself and make today count! You’ve got this. And if you need help, I'm just a message away.",
-    "💪 Every new day is a chance to grow, learn, and shine. Keep going! If there's anything I can do for you, just let me know.",
-    "🌈 Stay inspired, stay focused, and make the most of today! If you ever need support, I’m here to help.",
-    "🌍 Wherever you are, whatever you're doing—wishing you success and happiness. And remember, I'm always here if you need assistance.",
-    "🎯 Take on the day with confidence and energy. Great things await you! If you need anything, don’t hesitate to ask."
+        "🌟 Wishing you a fantastic and productive day ahead! Stay positive and keep moving forward. I'm available if you need any help.",
+        "✨ Hope today brings you success, happiness, and new opportunities! Let me know if there's anything I can assist you with.",
+        "💡 Stay motivated and keep pushing towards your goals—great things are coming your way! I'm here if you need any support.",
+        "🚀 A fresh day, a fresh start! Make the most of every moment. If you need any help, feel free to reach out.",
+        "🌼 Sending you good vibes and positivity—may your day be amazing! Let me know if you need any assistance.",
+        "🔥 Believe in yourself and make today count! You've got this. And if you need help, I'm just a message away.",
+        "💪 Every new day is a chance to grow, learn, and shine. Keep going! If there's anything I can do for you, just let me know.",
+        "🌈 Stay inspired, stay focused, and make the most of today! If you ever need support, I'm here to help.",
+        "🌍 Wherever you are, whatever you're doing—wishing you success and happiness. And remember, I'm always here if you need assistance.",
+        "🎯 Take on the day with confidence and energy. Great things await you! If you need anything, don't hesitate to ask.",
     ]
     message = random.choice(messages)
-    
+
     # Get all authenticated clients
-    authenticated_clients = ChatSession.objects.filter(auth_token__isnull=False).values_list("phone_number", flat=True)
+    authenticated_clients = ChatSession.objects.filter(
+        auth_token__isnull=False
+    ).values_list("phone_number", flat=True)
 
     if not authenticated_clients:
         print("⚠️ No authenticated clients found.")
         return
 
-    print(f"📢 Sending messages to {len(authenticated_clients)} authenticated clients...")
+    print(
+        f"📢 Sending messages to {len(authenticated_clients)} authenticated clients..."
+    )
 
     for client in authenticated_clients:
-      #  number = "923312844594"
         data = get_text_message_input(client, message)
         send_message(data)
-        time.sleep(1)  # Delay to prevent hitting API limits
+        time.sleep(1)
+
 
 def scheduled_task():
     """Runs the scheduler to send messages daily at 9 AM."""
@@ -235,7 +240,8 @@ def scheduled_task():
 
     while True:
         schedule.run_pending()
-        time.sleep(30)  # Check every 30 seconds
+        time.sleep(60)
+
 
 def run_scheduler():
     """Runs the scheduler in a separate background thread."""
@@ -248,14 +254,18 @@ def get_chat_history(phone_number):
     try:
 
         session = ChatSession.objects.get(phone_number=phone_number)
-        
-        messages = ChatMessage.objects.filter(session=session).order_by('-created_at')[:10]
-        
+
+        messages = ChatMessage.objects.filter(session=session).order_by("-created_at")[
+            :10
+        ]
+
         messages = list(messages)[::-1]
         chat_history = [
             ChatMessageModel(
-                role=MessageRole.USER if msg.sender == "USER" else MessageRole.ASSISTANT,
-                content=msg.content
+                role=(
+                    MessageRole.USER if msg.sender == "USER" else MessageRole.ASSISTANT
+                ),
+                content=msg.content,
             )
             for msg in messages
         ]
@@ -273,14 +283,11 @@ def get_chat_history(phone_number):
 
         history = memory.get()
         formatted_history = "\n".join(
-        [f"{msg.role.value.capitalize()}: {msg.content}" for msg in history]
-    )
+            [f"{msg.role.value.capitalize()}: {msg.content}" for msg in history]
+        )
         print(formatted_history)
 
         return formatted_history
-        #print("Chat history\n")
-        #print(history)
-       # return chat_history
 
     except Exception as e:
         print(f"Error retrieving chat history: {e}")

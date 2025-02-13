@@ -3,12 +3,20 @@ import json
 import threading
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+
 from chatbot.bot.pipeline import Pipeline
-from .services import (get_text_message_input, send_message, authenticate_user,get_interactive_list_message,
-    get_login_detail_message,
-    get_logout_message, get_chat_history,run_scheduler)
 from chatbot.models import ChatMessage, ChatSession
 
+from .services import (
+    send_message,
+    authenticate_user,
+    get_text_message_input,
+    get_interactive_list_message,
+    get_login_detail_message,
+    get_logout_message,
+    get_chat_history,
+    run_scheduler,
+)
 
 
 @csrf_exempt
@@ -22,11 +30,9 @@ def webhook(request):
     elif request.method == "POST":
         try:
             data = json.loads(request.body)
-
             print("Incoming Webhook Data:", json.dumps(data, indent=2))
 
             if "statuses" in data.get("entry", [])[0]["changes"][0]["value"]:
-                # Log and ignore status updates
                 print("Ignoring status update:", data)
                 return JsonResponse({"status": "ignored status update"}, status=200)
 
@@ -36,7 +42,6 @@ def webhook(request):
             contacts = changes.get("value", {}).get("contacts", [])
 
             if messages:
-
                 sender_id = messages[0]["from"]
                 unique_message_id = messages[0]["id"]
 
@@ -74,21 +79,25 @@ def webhook(request):
                 incoming_text = (
                     messages[0].get("text", {}).get("body", "").strip().lower()
                 )  # Convert to lowercase for case insensitivity
+
                 if contacts:
                     user_name = contacts[0]["profile"].get("name", "Unknown")
                     print(f"Whatsapp User Name: {user_name}")
 
                 if ChatSession.objects.filter(
-                    phone_number=sender_id, auth_token__isnull=False
+                    phone_number=sender_id,
+                    auth_token__isnull=False,
                 ).exists():
 
                     session_data = (
                         ChatSession.objects.filter(
-                            phone_number=sender_id, auth_token__isnull=False
+                            phone_number=sender_id,
+                            auth_token__isnull=False,
                         )
                         .values("id", "auth_token")
                         .get()
                     )
+
                     session_id = session_data["id"]
                     auth_token = session_data["auth_token"]
                     session = ChatSession.objects.get(id=session_id)
@@ -194,24 +203,38 @@ def webhook(request):
 
                     # Handle generic text questions
                     if incoming_text:
-                    
-                        chatHistory=get_chat_history(sender_id)
+
+                        chatHistory = get_chat_history(sender_id)
                         final_message = f"**You are a helpful AI assistant. Maintain conversation context. Chat History:**\n{chatHistory}\n\n**User's new Message:**\n{incoming_text}"
                         pipeline_instance = Pipeline(AUTH_TOKEN)
-                        function_result = pipeline_instance.run_generic_question(final_message)
-                        
-                        ChatMessage.objects.create(sender="USER", content=incoming_text,unique_message_id=unique_message_id ,session=session)
+                        function_result = pipeline_instance.run_generic_question(
+                            final_message
+                        )
+
+                        ChatMessage.objects.create(
+                            sender="USER",
+                            content=incoming_text,
+                            unique_message_id=unique_message_id,
+                            session=session,
+                        )
                         print(function_result)
 
-
-                    
                         function_result = function_result[:4096]
-                        message_data = get_text_message_input(sender_id, function_result)
+                        message_data = get_text_message_input(
+                            sender_id, function_result
+                        )
                         send_message(message_data)
-                        ChatMessage.objects.create(sender="BOT", content=function_result,unique_message_id="" ,session=session)
+                        ChatMessage.objects.create(
+                            sender="BOT",
+                            content=function_result,
+                            unique_message_id="",
+                            session=session,
+                        )
 
-                        return JsonResponse({"status": "success", "message": "Analysis executed"}, status=200)
-
+                        return JsonResponse(
+                            {"status": "success", "message": "Analysis executed"},
+                            status=200,
+                        )
 
                 elif not ChatSession.objects.filter(phone_number=sender_id).exists():
                     ChatSession.objects.create(phone_number=sender_id)
@@ -248,6 +271,7 @@ def webhook(request):
 
     return HttpResponse("Method not allowed", status=405)
 
+
 if not threading.active_count() <= 1:
     print("🟢 Starting background scheduler thread...")
-    run_scheduler() 
+    run_scheduler()
