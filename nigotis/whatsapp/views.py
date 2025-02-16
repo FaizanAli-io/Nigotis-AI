@@ -5,7 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from chatbot.bot.pipeline import Pipeline
-from chatbot.models import ChatMessage, ChatSession
+from chatbot.models import Message, Session,Client
 
 from .services import (
     send_message,
@@ -56,19 +56,44 @@ def webhook(request):
                 if email_match and password_match:
                     email = email_match.group(1).strip()
                     password = password_match.group(1).strip()
+                    
                     if email and password:
-                        response = authenticate_user(email, password, sender_id)
-                        message_data = get_text_message_input(sender_id, response)
-                        send_message(message_data)
-                        return JsonResponse(
-                            {"status": "success", "message": "Analysis executed"},
-                            status=200,
-                        )
+                        if Client.objects.filter(
+                        login_email = email,
+                        login_password = password  
+                        ).exists():
+
+                            client = Client.objects.get(
+                                    login_email = email,
+                                    login_password = password
+                                    )
+                            if Session.objects.filter(
+                                    phone_number = sender_id
+                                ).exists():
+                                session = Session.objects.get(phone_number=sender_id)           
+                                session.client = client
+                                session.save()
+
+                            else:
+                                Session.objects.create(
+                                    phone_number = sender_id,
+                                    website = False,
+                                    client = client.id
+                                )
+                        else:
+
+                            response = authenticate_user(email, password, sender_id)
+                            message_data = get_text_message_input(sender_id, response)
+                            send_message(message_data)
+                            return JsonResponse(
+                                {"status": "success", "message": "Analysis executed"},
+                                status=200,
+                            )
                     else:
                         send_message(
                             get_text_message_input(
                                 sender_id,
-                                "⚠️ Please enter both email and password in the correct format.",
+                                "⚠ Please enter both email and password in the correct format.",
                             )
                         )
                         return JsonResponse(
@@ -84,26 +109,36 @@ def webhook(request):
                     user_name = contacts[0]["profile"].get("name", "Unknown")
                     print(f"Whatsapp User Name: {user_name}")
 
-                if ChatSession.objects.filter(
+                if Session.objects.filter(
                     phone_number=sender_id,
-                    auth_token__isnull=False,
+                    client__isnull=False,
                 ).exists():
 
                     session_data = (
-                        ChatSession.objects.filter(
+                        Session.objects.filter(
                             phone_number=sender_id,
-                            auth_token__isnull=False,
                         )
-                        .values("id", "auth_token")
+                        .values("client","id")
                         .get()
                     )
+                    Session.objects.filter(
 
-                    session_id = session_data["id"]
-                    auth_token = session_data["auth_token"]
-                    session = ChatSession.objects.get(id=session_id)
+                    ).values()
+                    client_id = session_data["client"]
+
+                    client_data = (
+                                Client.objects.filter(
+                                    id = client_id,
+
+                                ).values("auth_token")
+                                .get()
+                                )
+
+                    auth_token = client_data["auth_token"]
+
                     AUTH_TOKEN = auth_token
 
-                    if ChatMessage.objects.filter(
+                    if Message.objects.filter(
                         unique_message_id=unique_message_id
                     ).exists():
                         print(f"Duplicate message detected: {unique_message_id}")
@@ -114,14 +149,14 @@ def webhook(request):
                     # Handle "help" message
                     if incoming_text == "#options":
                         interactive_message = get_interactive_list_message(sender_id)
-                        ChatMessage.objects.create(
+                        Message.objects.create(
                             sender="USER",
                             content=incoming_text,
                             unique_message_id=unique_message_id,
                             session=session,
                         )
                         send_message(interactive_message)
-                        ChatMessage.objects.create(
+                        Message.objects.create(
                             sender="BOT",
                             content="Options Sent.",
                             unique_message_id="",
@@ -137,12 +172,8 @@ def webhook(request):
 
                     if incoming_text == "#logout":
                         try:
-                            session = ChatSession.objects.get(phone_number=sender_id)
-                            session.login_email = None
-                            session.login_password = None
-                            session.auth_token = None
-                            session.authenticated_at = None
-
+                            session = Session.objects.get(phone_number=sender_id)
+                            session.client = None
                             session.save()
 
                             message_data = get_text_message_input(
@@ -158,7 +189,7 @@ def webhook(request):
                                 status=200,
                             )
                         except:
-                            error_message = "⚠️ Unable to logout. No active session found for your phone number."
+                            error_message = "⚠ Unable to logout. No active session found for your phone number."
                             send_message(
                                 get_text_message_input(sender_id, error_message)
                             )
@@ -172,7 +203,7 @@ def webhook(request):
                         interactive_data = messages[0]["interactive"]
                         if "list_reply" in interactive_data:
                             selected_id = interactive_data["list_reply"]["id"]
-                            ChatMessage.objects.create(
+                            Message.objects.create(
                                 sender="USER",
                                 content=selected_id,
                                 unique_message_id=unique_message_id,
@@ -190,7 +221,7 @@ def webhook(request):
                                 sender_id, function_result
                             )
                             send_message(message_data)
-                            ChatMessage.objects.create(
+                            Message.objects.create(
                                 sender="BOT",
                                 content=function_result,
                                 unique_message_id="",
@@ -205,13 +236,13 @@ def webhook(request):
                     if incoming_text:
 
                         chatHistory = get_chat_history(sender_id)
-                        final_message = f"**You are a helpful AI assistant. Maintain conversation context. Chat History:**\n{chatHistory}\n\n**User's new Message:**\n{incoming_text}"
+                        final_message = f"*You are a helpful AI assistant. Maintain conversation context. Chat History:\n{chatHistory}\n\nUser's new Message:*\n{incoming_text}"
                         pipeline_instance = Pipeline(AUTH_TOKEN)
                         function_result = pipeline_instance.run_generic_question(
                             final_message
                         )
 
-                        ChatMessage.objects.create(
+                        Message.objects.create(
                             sender="USER",
                             content=incoming_text,
                             unique_message_id=unique_message_id,
@@ -224,7 +255,7 @@ def webhook(request):
                             sender_id, function_result
                         )
                         send_message(message_data)
-                        ChatMessage.objects.create(
+                        Message.objects.create(
                             sender="BOT",
                             content=function_result,
                             unique_message_id="",
@@ -236,8 +267,7 @@ def webhook(request):
                             status=200,
                         )
 
-                elif not ChatSession.objects.filter(phone_number=sender_id).exists():
-                    ChatSession.objects.create(phone_number=sender_id)
+                elif (not Session.objects.filter(phone_number=sender_id).exists()) or (Session.objects.filter(phone_number=sender_id, client__isnull=True).exists()):
 
                     message_data = get_text_message_input(
                         sender_id, get_login_detail_message()
@@ -248,18 +278,18 @@ def webhook(request):
                         status=200,
                     )
 
-                if ChatSession.objects.filter(
-                    phone_number=sender_id, auth_token__isnull=True
-                ).exists():
+                # if Session.objects.filter(
+                #     phone_number=sender_id, session_id__isnull=True
+                # ).exists():
 
-                    message_data = get_text_message_input(
-                        sender_id, get_login_detail_message()
-                    )
-                    send_message(message_data)
-                    return JsonResponse(
-                        {"status": "success", "message": "Analysis executed"},
-                        status=200,
-                    )
+                #     message_data = get_text_message_input(
+                #         sender_id, get_login_detail_message()
+                #     )
+                #     send_message(message_data)
+                #     return JsonResponse(
+                #         {"status": "success", "message": "Analysis executed"},
+                #         status=200,
+                #     )
 
             return JsonResponse(
                 {"status": "success", "message": "Webhook processed"}, status=200

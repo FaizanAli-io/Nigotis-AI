@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ChatSession, ChatMessage
+from .models import  Message ,Client ,Session
 
 
 class LoginRequestSerializer(serializers.Serializer):
@@ -7,16 +7,15 @@ class LoginRequestSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
-class ChatSessionSerializer(serializers.ModelSerializer):
+class ClientSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ChatSession
+        model = Client
         fields = [
             "id",
             "name",
             "role",
             "login_email",
             "auth_token",
-            "phone_number",
             "authenticated_at",
             "created_at",
             "updated_at",
@@ -27,8 +26,15 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     sender = serializers.CharField(default="USER", read_only=True)
 
     class Meta:
-        model = ChatMessage
+        model = Message
         fields = "__all__"
+
+class SessionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Session
+        fields = '__all__'
+
 
 
 class OpenAiTestSerializer(serializers.Serializer):
@@ -57,3 +63,6 @@ class OpenAiTestSerializer(serializers.Serializer):
                 {"message": "Message must be populated if feature is 'GEN'."}
             )
         return data
+
+
+

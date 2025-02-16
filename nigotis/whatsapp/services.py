@@ -7,11 +7,11 @@ import requests
 import threading
 from dotenv import load_dotenv
 from django.utils.timezone import now
-from chatbot.models import ChatMessage, ChatSession
+from chatbot.models import Message, Client,Session
 
 from llama_index.llms.openai import OpenAI as OpenAiLlm
 from llama_index.core.memory import ChatSummaryMemoryBuffer
-from llama_index.core.llms import ChatMessage as ChatMessageModel, MessageRole
+from llama_index.core.llms import ChatMessage as MessageModel, MessageRole
 import tiktoken
 
 # Load environment variables
@@ -66,17 +66,25 @@ def authenticate_user(email, password, sender_id):
         data = response_data.get("data", {})
 
         # Store user session in the database
-        session = ChatSession.objects.filter(phone_number=sender_id).first()
-        if session:
-            # Update the existing session
-            session.name = f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}"
-            session.role = data["role"].upper()
-            session.login_email = email
-            session.login_password = password  # Consider hashing the password if stored
-            session.auth_token = data["token"]
-            session.authenticated_at = now()
-            session.save()
-            return welcome_login_message(session.name)
+        #session = Client.objects.filter(phone_number=sender_id).first()
+        client_name =  f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}"
+        client = Client.objects.create(  # Store the created Client instance
+            name=client_name,
+            role=data["role"].upper(),
+            login_email=email,
+            login_password=password,  # Consider hashing the password if stored
+            auth_token=data["token"],
+            authenticated_at=now()
+        )
+        print(f"Client ID : {client.id}")
+        Session.objects.create(
+            phone_number=sender_id,
+            website=False,
+            client=client  
+        )
+        
+        return welcome_login_message(client_name)
+    
     except:
         return "Request not Processed"
 
@@ -161,10 +169,10 @@ def get_login_detail_message():
     - Password: [Your Password]
 
     Example:
-    ```
+    
     Email: example@example.com
     Password: ********
-    ```
+    
     
     Ensure that your credentials are correct to proceed.
     """
@@ -177,8 +185,8 @@ def welcome_login_message(name):
 ✅ Login Successful! Welcome to Nigotis-AI, {name}. 🚀
 
 You can now:
-- Use *#options* to view and run available analysis options.
-- Use *#logout* to securely log out of your session.
+- Use #options to view and run available analysis options.
+- Use #logout to securely log out of your session.
 
 Let me know how I can assist you!
 """
@@ -188,11 +196,11 @@ Let me know how I can assist you!
 def get_logout_message():
     response_message = """👋 Goodbye, 
 
-You have successfully logged out of your session. 🛡️
+You have successfully logged out of your session. 🛡
 
 If you need further assistance, feel free to log in again anytime.
 
-Use *#login* to log back into your account.
+Use #login to log back into your account.
 
 Stay safe and have a great day! 🚀"""
     return response_message
@@ -215,12 +223,12 @@ def send_greeting_message():
     message = random.choice(messages)
 
     # Get all authenticated clients
-    authenticated_clients = ChatSession.objects.filter(
+    authenticated_clients = Client.objects.filter(
         auth_token__isnull=False
     ).values_list("phone_number", flat=True)
 
     if not authenticated_clients:
-        print("⚠️ No authenticated clients found.")
+        print("⚠ No authenticated clients found.")
         return
 
     print(
@@ -253,15 +261,15 @@ def run_scheduler():
 def get_chat_history(phone_number):
     try:
 
-        session = ChatSession.objects.get(phone_number=phone_number)
+        session = Client.objects.get(phone_number=phone_number)
 
-        messages = ChatMessage.objects.filter(session=session).order_by("-created_at")[
+        messages = Message.objects.filter(session=session).order_by("-created_at")[
             :10
         ]
 
         messages = list(messages)[::-1]
         chat_history = [
-            ChatMessageModel(
+            MessageModel(
                 role=(
                     MessageRole.USER if msg.sender == "USER" else MessageRole.ASSISTANT
                 ),
