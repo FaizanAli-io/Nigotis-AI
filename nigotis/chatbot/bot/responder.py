@@ -121,6 +121,7 @@ class Responder:
         prompt += "After presenting the data, provide insights on the high-value clients, how to nurture relationships with them, and any patterns in customer revenue behavior."
 
         return prompt
+
     @staticmethod
     def analyze_purchase_value(purchase_value_data):
         prompt = (

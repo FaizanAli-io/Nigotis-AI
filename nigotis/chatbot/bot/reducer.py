@@ -244,7 +244,9 @@ class Reducer:
                     client_name not in client_last_purchase
                     or issue_date > client_last_purchase[client_name]["issue_date"]
                 ):
-                    last_products = [product["name"] for product in invoice.get("products", [])]
+                    last_products = [
+                        product["name"] for product in invoice.get("products", [])
+                    ]
                     client_last_purchase[client_name] = {
                         "issue_date": issue_date,
                         "last_products": last_products,

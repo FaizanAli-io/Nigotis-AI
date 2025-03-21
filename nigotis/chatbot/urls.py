@@ -7,7 +7,6 @@ from .views import (
     OpenAiTestView,
     SessionViewSet,
     ClientViewSet,
-
 )
 
 router = DefaultRouter()

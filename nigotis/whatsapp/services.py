@@ -1,3 +1,4 @@
+import re
 import os
 import json
 import time
@@ -5,11 +6,10 @@ import random
 import requests
 import schedule
 import requests
-import re
 import threading
 from dotenv import load_dotenv
 from django.utils.timezone import now
-from chatbot.models import Message, Client,Session
+from chatbot.models import Message, Client, Session
 
 from llama_index.llms.openai import OpenAI as OpenAiLlm
 from llama_index.core.memory import ChatSummaryMemoryBuffer
@@ -69,25 +69,21 @@ def authenticate_user(email, password, sender_id):
         data = response_data.get("data", {})
 
         # Store user session in the database
-        #session = Client.objects.filter(phone_number=sender_id).first()
-        client_name =  f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}"
+        # session = Client.objects.filter(phone_number=sender_id).first()
+        client_name = f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}"
         client = Client.objects.create(  # Store the created Client instance
             name=client_name,
             role=data["role"].upper(),
             login_email=email,
             login_password=password,  # Consider hashing the password if stored
             auth_token=data["token"],
-            authenticated_at=now()
+            authenticated_at=now(),
         )
         print(f"Client ID : {client.id}")
-        Session.objects.create(
-            phone_number=sender_id,
-            website=False,
-            client=client  
-        )
-        
+        Session.objects.create(phone_number=sender_id, website=False, client=client)
+
         return welcome_login_message(client_name)
-    
+
     except:
         return "Request not Processed"
 
@@ -227,9 +223,9 @@ def send_greeting_message():
     message = random.choice(messages)
 
     # Get all authenticated clients
-    authenticated_clients = Client.objects.filter(
-        auth_token__isnull=False
-    ).values_list("phone_number", flat=True)
+    authenticated_clients = Client.objects.filter(auth_token__isnull=False).values_list(
+        "phone_number", flat=True
+    )
 
     if not authenticated_clients:
         print("⚠ No authenticated clients found.")
@@ -267,9 +263,7 @@ def old_get_chat_history(phone_number):
 
         session = Session.objects.get(phone_number=phone_number)
 
-        messages = Message.objects.filter(session=session).order_by("-created_at")[
-            :10
-        ]
+        messages = Message.objects.filter(session=session).order_by("-created_at")[:10]
 
         messages = list(messages)[::-1]
         chat_history = [
@@ -306,16 +300,15 @@ def old_get_chat_history(phone_number):
         print(f"Error retrieving chat history: {e}")
         return []
 
+
 def get_chat_history(phone_number):
     try:
-       
+
         session = Session.objects.get(phone_number=phone_number)
 
-      
-        user_messages = (
-            Message.objects.filter(session=session, sender="USER")
-            .order_by("-created_at")[:5]
-        )
+        user_messages = Message.objects.filter(session=session, sender="USER").order_by(
+            "-created_at"
+        )[:5]
 
         user_messages = list(user_messages)[::-1]
         history = "\n".join([f"USER: {msg.content}" for msg in user_messages])
@@ -330,7 +323,7 @@ def get_chat_history(phone_number):
     except Exception as e:
         print(f"Error retrieving chat history: {e}")
         return ""
-    
+
 
 def get_client_list(AUTH_TOKEN):
     try:
@@ -338,34 +331,35 @@ def get_client_list(AUTH_TOKEN):
         # Fetch client list from the API
         headers = {
             "Authorization": f"Bearer {AUTH_TOKEN}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # Fetch client list from API with headers
-        response = requests.get("https://nigotis-be.vercel.app/api/v1/client", headers=headers)
-       
+        response = requests.get(
+            "https://nigotis-be.vercel.app/api/v1/client",
+            headers=headers,
+        )
+
         data = response.json()
 
         # Check if API returned success
         if data.get("success") and "data" in data:
             clients = data["data"]
-            
+
             client_selection_map = {}  # Reset previous mappings
             client_list_message = "📜 *Available Clients:*\n"
-            
+
             for index, client in enumerate(clients, start=1):
                 client_id = client["_id"]
                 first_name = client["personalInfo"]["firstName"]
                 last_name = client["personalInfo"]["lastName"]
-                phone = client["personalInfo"]["phone"]
 
                 # Map number to client ID
-                client_selection_map[str(index)] = client_id  
+                client_selection_map[str(index)] = client_id
 
                 # Format message
                 client_list_message += f"{index}. 👤 {first_name} {last_name}\n"
 
-           
             return client_list_message
         else:
             return "⚠ Unable to fetch clients. Please try again later."
@@ -375,18 +369,18 @@ def get_client_list(AUTH_TOKEN):
         return "⚠ An error occurred while fetching client data."
 
 
-
-
 def get_product_list(AUTH_TOKEN):
     try:
         # Set headers with Authorization token
         headers = {
             "Authorization": f"Bearer {AUTH_TOKEN}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # Fetch product list from API
-        response = requests.get("https://nigotis-be.vercel.app/api/v1/product", headers=headers)
+        response = requests.get(
+            "https://nigotis-be.vercel.app/api/v1/product", headers=headers
+        )
         data = response.json()
 
         # Check if API returned success
@@ -399,17 +393,14 @@ def get_product_list(AUTH_TOKEN):
             for index, product in enumerate(products, start=1):
                 product_id = product["_id"]
                 name = product["name"]
-                desc = product["desc"]  # Product description
                 price = product["price"]
-                images = product.get("images", [])  # Get image list if available
 
                 # Map number to product ID
-                product_selection_map[str(index)] = product_id  
+                product_selection_map[str(index)] = product_id
 
                 # Format message
                 product_list_message += f"{index}. 🛍 *{name}*\n💲 Price: ${price}\n\n"
 
-          
             return product_list_message
 
         else:
@@ -421,7 +412,7 @@ def get_product_list(AUTH_TOKEN):
 
 
 def get_invoice_creation_prompt():
-    return  """
+    return """
 📝 *Invoice Creation Instructions*
 You are about to create an invoice. Please follow the format sent to you in next message.
 
@@ -432,41 +423,46 @@ You are about to create an invoice. Please follow the format sent to you in next
 📩 *Once edited, send the formatted invoice back!*
 """
 
+
 def get_invoice_template():
     return """
-Invoice_Creation
+Create Invoice
 
+Client: 2
+Issue Date: 2025-03-01
+Due Date: 2025-03-10
+Status: pending
+Discount: 15
+Amount: 100
+Tax: 8
 
-clientId: 2
-issueDate: 2025-03-01
-dueDate: 2025-03-10
-status: approved
-tax: 8
-discount: 15
-paidAmount: 100
-items: Product_id: 5, Quantity: 3; Product_id: 7, Quantity: 1; Product_id: 9, Quantity: 4
-
-
+Items:
+Product: 5, Quantity: 3
+Product: 7, Quantity: 1
+Product: 9, Quantity: 4
 """
-
 
 
 def product_selection_map(product_number, AUTH_TOKEN):
     try:
         headers = {
             "Authorization": f"Bearer {AUTH_TOKEN}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # Fetch product list from API
-        response = requests.get("https://nigotis-be.vercel.app/api/v1/product", headers=headers)
+        response = requests.get(
+            "https://nigotis-be.vercel.app/api/v1/product", headers=headers
+        )
         data = response.json()
 
         if data.get("success") and "data" in data:
             products = data["data"]
 
             for index, product in enumerate(products, start=1):
-                if str(index) == str(product_number):  # Stop loop when matching product_number
+                if str(index) == str(
+                    product_number
+                ):  # Stop loop when matching product_number
                     return product["_id"]  # Return product ID immediately
 
             return None  # If product_number not found
@@ -478,29 +474,30 @@ def product_selection_map(product_number, AUTH_TOKEN):
         print(f"Error fetching products: {e}")
         return None  # Handle errors gracefully
 
-    
 
-def client_selection_map(client_number,AUTH_TOKEN):
+def client_selection_map(client_number, AUTH_TOKEN):
     try:
         headers = {
             "Authorization": f"Bearer {AUTH_TOKEN}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         # Fetch client list from API with headers
-        response = requests.get("https://nigotis-be.vercel.app/api/v1/client", headers=headers)
-       
+        response = requests.get(
+            "https://nigotis-be.vercel.app/api/v1/client", headers=headers
+        )
+
         data = response.json()
 
         if data.get("success") and "data" in data:
             clients = data["data"]
-            
-        
-            
+
             for index, client in enumerate(clients, start=1):
-               if str(index) == str(client_number):  # Stop loop when matching client_number
+                if str(index) == str(
+                    client_number
+                ):  # Stop loop when matching client_number
                     return client["_id"]  # Return client ID immediately
-           
+
             return None
         else:
             return None
@@ -510,45 +507,32 @@ def client_selection_map(client_number,AUTH_TOKEN):
         return "⚠ An error occurred while fetching client data."
 
 
-def parse_and_post_invoice(message,AUTH_TOKEN):
+def parse_and_post_invoice(message, AUTH_TOKEN):
     try:
-        # Validate that the message starts with "Invoice_Creation"
-        message=str(message)
-        if not message.startswith("invoice_creation"):
-            return "⚠ Invalid format. Please ensure your message starts with 'Invoice_Creation'."
+        message = str(message)
+        if not message.startswith("create invoice"):
+            return "⚠ Invalid format. Please ensure your message starts with 'create invoice'."
 
-        
-        client_number = re.search(r"clientid:\s*(\d+)", message).group(1)
-        print(client_number)
-        issue_date = re.search(r"issuedate:\s*(\S+)", message).group(1)
-        print(issue_date)
-        due_date = re.search(r"duedate:\s*(\S+)", message).group(1)
-        print(due_date)
+        client_number = re.search(r"client:\s*(\d+)", message).group(1)
+        issue_date = re.search(r"issue date:\s*(\S+)", message).group(1)
+        due_date = re.search(r"due date:\s*(\S+)", message).group(1)
         status = re.search(r"status:\s*(\S+)", message).group(1)
-        print(status)
-        tax = int(re.search(r"tax:\s*(\d+)", message).group(1))
-        print(tax)
         discount = int(re.search(r"discount:\s*(\d+)", message).group(1))
-        print(discount)
-        paid_amount = int(re.search(r"paidamount:\s*(\d+)", message).group(1))
-        print(paid_amount)
+        paid_amount = int(re.search(r"amount:\s*(\d+)", message).group(1))
+        tax = int(re.search(r"tax:\s*(\d+)", message).group(1))
 
-        # Extract items (product_id and quantity)
+        client_id = client_selection_map(client_number, AUTH_TOKEN)
+        if not client_id:
+            return "⚠ Invalid Client ID. Please check your selection."
+
         items = []
-        item_matches = re.findall(r"product_id:\s*(\d+),\s*quantity:\s*(\d+)", message)
+        item_matches = re.findall(r"product:\s*(\d+),\s*quantity:\s*(\d+)", message)
         for item in item_matches:
             product_number, quantity = item
-            product_id = product_selection_map(product_number,AUTH_TOKEN)  # Map to actual product ID
+            product_id = product_selection_map(product_number, AUTH_TOKEN)
             if product_id:
                 items.append({"productId": product_id, "quantity": int(quantity)})
 
-        # Convert client number to actual client ID
-        client_id = client_selection_map(client_number,AUTH_TOKEN)
-
-        if not client_id:
-            return "⚠ Invalid Client ID. Please check your selection."
-        print(items)
-        # Create JSON object
         invoice_data = {
             "clientId": client_id,
             "issueDate": issue_date,
@@ -557,25 +541,25 @@ def parse_and_post_invoice(message,AUTH_TOKEN):
             "tax": tax,
             "discount": discount,
             "paidAmount": paid_amount,
-            "items": items
+            "items": items,
         }
 
-        
         invoice_json = json.dumps(invoice_data, indent=4)
-        print("Invoice Object:")
-        print( invoice_json)
-
-      
         headers = {
             "Authorization": f"Bearer {AUTH_TOKEN}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
-        response = requests.post("https://nigotis-be.vercel.app/api/v1/client/invoice", headers=headers, data=invoice_json)
-        print(response)
-        if response.status_code == 201:
-            return "✅ Invoice Created Successfully!"
-        else:
-            return f"⚠ Error creating invoice. Server responded with: {response.status_code} - {response.text}"
+        response = requests.post(
+            "https://nigotis-be.vercel.app/api/v1/client/invoice",
+            headers=headers,
+            data=invoice_json,
+        )
+
+        return (
+            "✅ Invoice Created Successfully!"
+            if response.status_code == 201
+            else f"⚠ Error creating invoice. Server responded with: {response.status_code} - {response.text}"
+        )
 
     except Exception as e:
         return f"⚠ Error parsing invoice data: {e}"

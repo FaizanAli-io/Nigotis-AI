@@ -8,21 +8,17 @@ from rest_framework.generics import GenericAPIView
 from drf_spectacular.utils import extend_schema
 from django.utils.timezone import now
 
-from .models import Message ,Client, Session
+from .models import Message, Client, Session
 
 from .serializers import (
     LoginRequestSerializer,
     ClientSerializer,
     ChatMessageSerializer,
     OpenAiTestSerializer,
-    SessionSerializer
+    SessionSerializer,
 )
 
 from .bot.pipeline import Pipeline
-
-
-
-
 
 
 @extend_schema(tags=["Client"])
@@ -55,7 +51,7 @@ class ClientViewSet(ModelViewSet):
                 )
 
             data = response_data.get("data", {})
-            session =Client.objects.create(
+            session = Client.objects.create(
                 name=f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}",
                 role=data["role"].upper(),
                 login_email=login_email,
@@ -113,8 +109,6 @@ class CheckAuthTokenView(GenericAPIView):
             return Response(
                 {"error": "Chat session not found"}, status=status.HTTP_404_NOT_FOUND
             )
-
-
 
 
 @extend_schema(tags=["ChatSession"])

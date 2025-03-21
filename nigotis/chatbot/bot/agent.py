@@ -43,15 +43,13 @@ class LlamaAgent:
         self.agent = ReActAgent.from_tools(
             tools=toolkit,
             verbose=True,
-           system_prompt=(
-               "The chatbot should take a stepwise approach to the task at hand. "
-               "1. First, determine if any data retrieval is necessary based on the user's query. "
-               "2. After retrieving data, analyze whether any filtering or further processing is required. "
-               "3. Finally, provide a detailed and verbose output of the resultant data. "
+            system_prompt=(
+                "The chatbot should take a stepwise approach to the task at hand. "
+                "1. First, determine if any data retrieval is necessary based on the user's query. "
+                "2. After retrieving data, analyze whether any filtering or further processing is required. "
+                "3. Finally, provide a detailed and verbose output of the resultant data. "
                 "Be mindful to avoid redundant data retrieval and ensure that filtration is applied only when needed. Respond strictly in English."
-           ),
-
-
+            ),
         )
 
     def define_toolkit(self, mapper):
