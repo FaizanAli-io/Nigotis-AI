@@ -4,6 +4,7 @@ django-cors-headers
 djangorestframework
 
 openai
+schedule
 llama_index
 python-dotenv
 psycopg2-binary

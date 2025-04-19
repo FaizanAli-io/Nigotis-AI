@@ -2,15 +2,18 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    ChatSessionViewSet,
     ChatMessageViewSet,
     CheckAuthTokenView,
     OpenAiTestView,
+    SessionViewSet,
+    ClientViewSet,
 )
 
 router = DefaultRouter()
-router.register("session", ChatSessionViewSet, basename="session")
+
 router.register("message", ChatMessageViewSet, basename="message")
+router.register("chat-session", SessionViewSet, basename="chat-session")
+router.register("client", ClientViewSet, basename="client")
 
 urlpatterns = [
     path("", include(router.urls)),

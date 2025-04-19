@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ChatSession, ChatMessage
+from .models import Message, Client, Session
 
 
 class LoginRequestSerializer(serializers.Serializer):
@@ -7,9 +7,9 @@ class LoginRequestSerializer(serializers.Serializer):
     password = serializers.CharField()
 
 
-class ChatSessionSerializer(serializers.ModelSerializer):
+class ClientSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ChatSession
+        model = Client
         fields = [
             "id",
             "name",
@@ -26,7 +26,14 @@ class ChatMessageSerializer(serializers.ModelSerializer):
     sender = serializers.CharField(default="USER", read_only=True)
 
     class Meta:
-        model = ChatMessage
+        model = Message
+        fields = "__all__"
+
+
+class SessionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Session
         fields = "__all__"
 
 

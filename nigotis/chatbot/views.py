@@ -8,25 +8,27 @@ from rest_framework.generics import GenericAPIView
 from drf_spectacular.utils import extend_schema
 from django.utils.timezone import now
 
-from .models import ChatSession, ChatMessage
+from .models import Message, Client, Session
+
 from .serializers import (
     LoginRequestSerializer,
-    ChatSessionSerializer,
+    ClientSerializer,
     ChatMessageSerializer,
     OpenAiTestSerializer,
+    SessionSerializer,
 )
 
 from .bot.pipeline import Pipeline
 
 
-@extend_schema(tags=["Session"])
-class ChatSessionViewSet(ModelViewSet):
-    queryset = ChatSession.objects.all()
-    serializer_class = ChatSessionSerializer
+@extend_schema(tags=["Client"])
+class ClientViewSet(ModelViewSet):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
 
     @extend_schema(
         request=LoginRequestSerializer,
-        responses={201: ChatSessionSerializer},
+        responses={201: ClientSerializer},
     )
     def create(self, request):
         login_serializer = LoginRequestSerializer(data=request.data)
@@ -49,7 +51,7 @@ class ChatSessionViewSet(ModelViewSet):
                 )
 
             data = response_data.get("data", {})
-            session = ChatSession.objects.create(
+            session = Client.objects.create(
                 name=f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}",
                 role=data["role"].upper(),
                 login_email=login_email,
@@ -57,7 +59,7 @@ class ChatSessionViewSet(ModelViewSet):
                 auth_token=data["token"],
             )
 
-            serializer = ChatSessionSerializer(session)
+            serializer = ClientSerializer(session)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except requests.RequestException:
@@ -71,7 +73,7 @@ class ChatSessionViewSet(ModelViewSet):
 class CheckAuthTokenView(GenericAPIView):
     def post(self, _, id):
         try:
-            session = ChatSession.objects.get(id=id)
+            session = Client.objects.get(id=id)
             elapsed = now() - session.authenticated_at
 
             if elapsed > timedelta(hours=24):
@@ -94,7 +96,7 @@ class CheckAuthTokenView(GenericAPIView):
                 session.authenticated_at = now()
                 session.save()
 
-                serializer = ChatSessionSerializer(session)
+                serializer = ClientSerializer(session)
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             else:
@@ -103,15 +105,21 @@ class CheckAuthTokenView(GenericAPIView):
                     status=status.HTTP_200_OK,
                 )
 
-        except ChatSession.DoesNotExist:
+        except Client.DoesNotExist:
             return Response(
                 {"error": "Chat session not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
 
+@extend_schema(tags=["ChatSession"])
+class SessionViewSet(ModelViewSet):
+    queryset = Session.objects.all()
+    serializer_class = SessionSerializer
+
+
 @extend_schema(tags=["Message"])
 class ChatMessageViewSet(ModelViewSet):
-    queryset = ChatMessage.objects.all()
+    queryset = Message.objects.all()
     serializer_class = ChatMessageSerializer
 
     def perform_create(self, serializer):
@@ -126,7 +134,7 @@ class OpenAiTestView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        session = ChatSession.objects.get(id=id)
+        session = Client.objects.get(id=id)
         pipeline = Pipeline(session.auth_token)
 
         feature = serializer.validated_data["feature"]

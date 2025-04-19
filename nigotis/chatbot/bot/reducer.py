@@ -67,15 +67,65 @@ class Reducer:
         )
         return {"top_clients": top_clients[:5]}
 
+    # @staticmethod
+    # def purchase_value(invoices):
+    #     customers = {}
+
+    #     for invoice in invoices:
+    #         client_name = invoice["client_name"]
+    #         transaction_value = sum(
+    #             product["price"] * product["quantity"]
+    #             for product in invoice["products"]
+    #         )
+
+    #         if client_name not in customers:
+    #             customers[client_name] = {
+    #                 "name": client_name,
+    #                 "total_transaction_value": 0,
+    #                 "total_invoices": 0,
+    #             }
+
+    #         customers[client_name]["total_transaction_value"] += transaction_value
+    #         customers[client_name]["total_invoices"] += 1
+
+    #     for customer in customers.values():
+    #         customer["avg_transaction_value"] = (
+    #             customer["total_transaction_value"] / customer["total_invoices"]
+    #         )
+
+    #     customer_list = list(customers.values())
+    #     avg_transaction_values = [c["avg_transaction_value"] for c in customer_list]
+
+    #     median = np.median(avg_transaction_values)
+
+    #     high_value_clients = sorted(
+    #         [c for c in customer_list if c["avg_transaction_value"] > median],
+    #         key=lambda x: x["avg_transaction_value"],
+    #         reverse=True,
+    #     )
+    #     low_value_clients = sorted(
+    #         [c for c in customer_list if c["avg_transaction_value"] < median],
+    #         key=lambda x: x["avg_transaction_value"],
+    #         reverse=True,
+    #     )
+
+    #     return {
+    #         "high_value_clients": high_value_clients,
+    #         "low_value_clients": low_value_clients,
+    #     }
     @staticmethod
     def purchase_value(invoices):
         customers = {}
 
         for invoice in invoices:
-            client_name = invoice["client_name"]
+            client_name = invoice.get("client_name")
+            if not client_name:
+                print(f"Skipping invoice with missing client_name: {invoice}")
+                continue
+
             transaction_value = sum(
                 product["price"] * product["quantity"]
-                for product in invoice["products"]
+                for product in invoice.get("products", [])
             )
 
             if client_name not in customers:
@@ -139,6 +189,39 @@ class Reducer:
 
         return client_ltv
 
+    # @staticmethod
+    # def inactive_clients(invoices):
+    #     inactive_clients = []
+    #     client_last_purchase = {}
+    #     current_date = datetime.now()
+    #     inactivity_threshold_days = 90
+
+    #     for invoice in invoices:
+    #         issue_date = datetime.strptime(invoice["issueDate"], "%d-%m-%Y")
+    #         client_name = invoice["client_name"]
+
+    #         if (
+    #             client_name not in client_last_purchase
+    #             or issue_date > client_last_purchase[client_name]["issue_date"]
+    #         ):
+    #             last_products = [product["name"] for product in invoice["products"]]
+    #             client_last_purchase[client_name] = {
+    #                 "issue_date": issue_date,
+    #                 "last_products": last_products,
+    #             }
+
+    #     for client_name, data in client_last_purchase.items():
+    #         days_inactive = (current_date - data["issue_date"]).days
+    #         if days_inactive > inactivity_threshold_days:
+    #             inactive_clients.append(
+    #                 {
+    #                     "client_name": client_name,
+    #                     "days_inactive": days_inactive,
+    #                     "last_products": data["last_products"],
+    #                 }
+    #             )
+
+    #     return inactive_clients
     @staticmethod
     def inactive_clients(invoices):
         inactive_clients = []
@@ -147,18 +230,31 @@ class Reducer:
         inactivity_threshold_days = 90
 
         for invoice in invoices:
-            issue_date = datetime.strptime(invoice["issueDate"], "%d-%m-%Y")
-            client_name = invoice["client_name"]
+            try:
+                client_name = invoice.get("client_name", None)
+                issue_date_str = invoice.get("issueDate", None)
 
-            if (
-                client_name not in client_last_purchase
-                or issue_date > client_last_purchase[client_name]["issue_date"]
-            ):
-                last_products = [product["name"] for product in invoice["products"]]
-                client_last_purchase[client_name] = {
-                    "issue_date": issue_date,
-                    "last_products": last_products,
-                }
+                if not client_name or not issue_date_str:
+                    print(f"Skipping invoice due to missing data: {invoice}")
+                    continue  # Skip invoices with missing client_name or issueDate
+
+                issue_date = datetime.strptime(issue_date_str, "%d-%m-%Y")
+
+                if (
+                    client_name not in client_last_purchase
+                    or issue_date > client_last_purchase[client_name]["issue_date"]
+                ):
+                    last_products = [
+                        product["name"] for product in invoice.get("products", [])
+                    ]
+                    client_last_purchase[client_name] = {
+                        "issue_date": issue_date,
+                        "last_products": last_products,
+                    }
+
+            except Exception as e:
+                print(f"Error processing invoice: {invoice}, Error: {str(e)}")
+                continue
 
         for client_name, data in client_last_purchase.items():
             days_inactive = (current_date - data["issue_date"]).days

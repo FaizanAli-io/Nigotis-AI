@@ -1,9 +1,66 @@
 class Responder:
+    # @staticmethod
+    # def analyze_segmentation(segmentation_data):
+    #     prompt = (
+    #         "You are a business analyst. I have data on customer purchase frequencies segmented into high, "
+    #         "medium, and low frequency groups. Present the data in a clear and structured way, then analyze it. "
+    #         "Here is the data:\n\n"
+    #     )
+    #     for group, clients in segmentation_data.items():
+    #         prompt += f"{group.capitalize()} Frequency:\n"
+    #         for client in clients:
+    #             prompt += f"- {client['name']}: Total Purchases = {client['total_purchases']}\n"
+    #         prompt += "\n"
+
+    #     prompt += (
+    #         "After presenting the data, please provide insights on customer behavior and possible marketing strategies "
+    #         "for each group (high, medium, low frequency). Make the analysis user-friendly and actionable."
+    #     )
+
+    #     return prompt
+
+    # @staticmethod
+    # def analyze_product_preferences(preferences_data):
+    #     prompt = (
+    #         "You are a product analyst. I have data on customer product preferences showing each customer's top product "
+    #         "based on quantity purchased. Present the data in a structured format, then analyze it. Here is the data:\n\n"
+    #     )
+    #     for _, customer_data in preferences_data.items():
+    #         prompt += f"Customer: {customer_data['name']}\nTop Product: {customer_data['top_product']['name']}\n"
+    #         prompt += f"Description: {customer_data['top_product']['description']}\nQuantity: {customer_data['top_product']['quantity']}\n\n"
+
+    #     prompt += (
+    #         "After presenting the data, provide insights on customer preferences, potential product recommendations, "
+    #         "and strategies for product-related marketing or upselling. Make the analysis user-friendly and actionable."
+    #     )
+
+    #     return prompt
+
+    # @staticmethod
+    # def analyze_revenue_insights(revenue_data):
+    #     prompt = (
+    #         "You are a business analyst. I have data on customer revenue showing top clients based on the total value of their purchases. "
+    #         "Present the data in a structured format, then analyze it. Here is the data:\n\n"
+    #     )
+    #     for client in revenue_data["top_clients"]:
+    #         prompt += f"Client: {client['name']}\nTotal Revenue: {client['total_revenue']}\n\n"
+
+    #     prompt += "After presenting the data, provide insights on the high-value clients, how to nurture relationships with them, and any patterns in customer revenue behavior."
+
+    #     return prompt
     @staticmethod
     def analyze_segmentation(segmentation_data):
         prompt = (
+            "Your name is Nigotis-AI, your role is data-analyst. "
+            "Provide a clean and concise output, ensuring it is well-formatted for WhatsApp messages. "
+            "Use *single asterisk* for bold text, as WhatsApp does not support double asterisks. "
+            "Avoid structured formats like tables, bullet points, or JSON. "
+            "Instead, present the information naturally, like: Ms. Sarah has a total revenue of $51,500. "
+            "Maintain a professional and engaging tone while making the message easy to read and visually appealing. "
+            "Avoid redundant data retrieval and apply filtering only when necessary. "
+            "Respond strictly in English.\n\n"
             "You are a business analyst. I have data on customer purchase frequencies segmented into high, "
-            "medium, and low frequency groups. Present the data in a clear and structured way, then analyze it. "
+            "medium, and low frequency groups. Present the data in a clear way, then analyze it. "
             "Here is the data:\n\n"
         )
         for group, clients in segmentation_data.items():
@@ -22,6 +79,14 @@ class Responder:
     @staticmethod
     def analyze_product_preferences(preferences_data):
         prompt = (
+            "Your name is Nigotis-AI, your role is data-analyst. "
+            "Provide a clean and concise output, ensuring it is well-formatted for WhatsApp messages. "
+            "Use *single asterisk* for bold text, as WhatsApp does not support double asterisks. "
+            "Avoid structured formats like tables, bullet points, or JSON. "
+            "Instead, present the information naturally, like: Ms. Sarah has a total revenue of $51,500. "
+            "Maintain a professional and engaging tone while making the message easy to read and visually appealing. "
+            "Avoid redundant data retrieval and apply filtering only when necessary. "
+            "Respond strictly in English.\n\n"
             "You are a product analyst. I have data on customer product preferences showing each customer's top product "
             "based on quantity purchased. Present the data in a structured format, then analyze it. Here is the data:\n\n"
         )
@@ -39,6 +104,14 @@ class Responder:
     @staticmethod
     def analyze_revenue_insights(revenue_data):
         prompt = (
+            "Your name is Nigotis-AI, your role is data-analyst. "
+            "Provide a clean and concise output, ensuring it is well-formatted for WhatsApp messages. "
+            "Use *single asterisk* for bold text, as WhatsApp does not support double asterisks. "
+            "Avoid structured formats like tables, bullet points, or JSON. "
+            "Instead, present the information naturally, like: Ms. Sarah has a total revenue of $51,500. "
+            "Maintain a professional and engaging tone while making the message easy to read and visually appealing. "
+            "Avoid redundant data retrieval and apply filtering only when necessary. "
+            "Respond strictly in English.\n\n"
             "You are a business analyst. I have data on customer revenue showing top clients based on the total value of their purchases. "
             "Present the data in a structured format, then analyze it. Here is the data:\n\n"
         )

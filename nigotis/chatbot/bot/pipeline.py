@@ -14,7 +14,6 @@ class Pipeline:
         mapped = map_func()
         reduced = reduce_func(mapped)
         prompt = analyze_func(reduced)
-
         return self.base_agent.get_response(prompt)
 
     def run_generic_question(self, message):
