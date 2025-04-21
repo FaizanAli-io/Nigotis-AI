@@ -16,21 +16,20 @@ from llama_index.core.memory import ChatSummaryMemoryBuffer
 from llama_index.core.llms import ChatMessage as MessageModel, MessageRole
 import tiktoken
 
-# Load environment variables
 load_dotenv()
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+
+WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 VERSION = os.getenv("VERSION")
 
 
-# Function to create a text message input for WhatsApp
 def get_text_message_input(recipient, text):
     return json.dumps(
         {
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": recipient,
             "type": "text",
+            "to": recipient,
+            "recipient_type": "individual",
+            "messaging_product": "whatsapp",
             "text": {"preview_url": False, "body": text},
         }
     )
@@ -40,10 +39,11 @@ def get_text_message_input(recipient, text):
 def send_message(data):
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Authorization": f"Bearer {WHATSAPP_ACCESS_TOKEN}",
     }
     url = f"https://graph.facebook.com/{VERSION}/{PHONE_NUMBER_ID}/messages"
     response = requests.post(url, data=data, headers=headers)
+
     if response.status_code == 200:
         print("Message sent successfully.")
         return response
@@ -65,21 +65,20 @@ def authenticate_user(email, password, sender_id):
         if response.status_code != 200 or not response_data.get("success"):
             return "Authentication failed"
 
-        # Extract user data from response
         data = response_data.get("data", {})
 
-        # Store user session in the database
-        # session = Client.objects.filter(phone_number=sender_id).first()
         client_name = f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}"
-        client = Client.objects.create(  # Store the created Client instance
+        client = Client.objects.create(
             name=client_name,
-            role=data["role"].upper(),
             login_email=email,
-            login_password=password,  # Consider hashing the password if stored
+            login_password=password,
+            role=data["role"].upper(),
             auth_token=data["token"],
             authenticated_at=now(),
         )
+
         print(f"Client ID : {client.id}")
+
         Session.objects.create(phone_number=sender_id, website=False, client=client)
 
         return welcome_login_message(client_name)
@@ -222,7 +221,6 @@ def send_greeting_message():
     ]
     message = random.choice(messages)
 
-    # Get all authenticated clients
     authenticated_clients = Client.objects.filter(auth_token__isnull=False).values_list(
         "phone_number", flat=True
     )

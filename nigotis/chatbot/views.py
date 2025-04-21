@@ -148,10 +148,6 @@ class OpenAiTestView(GenericAPIView):
         except Exception as e:
             bot_message = e
 
-        # dumpname = message if feature == "GEN" else feature
-        # with open(f"dump/{dumpname}.txt", "w") as f:
-        #     f.write(bot_message)
-
         return Response(
             {"message": bot_message},
             status=status.HTTP_200_OK,
