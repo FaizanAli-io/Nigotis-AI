@@ -258,7 +258,6 @@ def run_scheduler():
 
 def old_get_chat_history(phone_number):
     try:
-
         session = Session.objects.get(phone_number=phone_number)
 
         messages = Message.objects.filter(session=session).order_by("-created_at")[:10]

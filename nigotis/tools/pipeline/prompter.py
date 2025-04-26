@@ -1,4 +1,4 @@
-class Responder:
+class Prompter:
     @staticmethod
     def analyze_segmentation(segmentation_data):
         prompt = (

@@ -17,14 +17,16 @@ class Mapper:
         return f"{info['title']} {info['firstName']} {info.get('lastName', '')}"
 
     def _make_request(self, url):
-        try:
-            headers = {"Authorization": f"Bearer {self.auth_token}"}
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            return response.json().get("data", None)
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e}")
-            return None
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        response = requests.get(url, headers=headers)
+
+        if response.json().get("success") is False:
+            raise requests.exceptions.RequestException(
+                f"Error: {response.json().get('message')}"
+            )
+
+        response.raise_for_status()
+        return response.json().get("data", None)
 
     def get_customers(self):
         url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
@@ -193,3 +195,11 @@ class Mapper:
             )
 
         return cleaned_payrolls
+
+
+if __name__ == "__main__":
+    auth_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGI1YmZiYWFhNTlkMmRlYTRjOTE1MiIsImlhdCI6MTc0NTY4MzAxNSwiZXhwIjoxNzQ4Mjc1MDE1fQ.c3H3vdAbcMfXLuyzSED4d5iT24oPwUYAKVhkUm7CuQ"
+    mapper = Mapper(auth_token)
+
+    data = getattr(mapper, "get_payrolls")()
+    print("Data:", data)

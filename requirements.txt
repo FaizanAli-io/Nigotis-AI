@@ -8,3 +8,8 @@ schedule
 llama_index
 python-dotenv
 psycopg2-binary
+
+pydantic
+langchain
+langchain-core
+langchain-openai
