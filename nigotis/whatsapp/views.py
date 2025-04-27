@@ -1,11 +1,8 @@
-import json
-
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from chatbot.models import Message, Session, Client
-
-from .bot import get_bot_response
+from agent.agent import ToolAgent
+from chatbot.models import Message, Session
 
 from .service import WhatsAppService
 
@@ -19,16 +16,41 @@ def webhook(request):
     if isinstance(input_payload, (HttpResponse, JsonResponse)):
         return input_payload
 
-    print("Input Payload:", input_payload)
+    sender_id = input_payload["sender_id"]
+    incoming_text = input_payload["incoming_text"]
+    unique_message_id = input_payload["unique_message_id"]
 
-    session, _ = Session.objects.get_or_create(phone_number=input_payload["sender_id"])
+    already_exists = Message.objects.filter(
+        unique_message_id=unique_message_id
+    ).exists()
 
-    bot_response = get_bot_response(session, input_payload["incoming_text"])
+    print(f"Message: {input_payload} already exists: {already_exists}")
 
-    whatsapp_service.send_message(
-        input_payload["sender_id"],
-        bot_response["output"],
+    if already_exists:
+        return JsonResponse(
+            {
+                "status": "success",
+                "message": "message already exists",
+            },
+            status=200,
+        )
+
+    session, _ = Session.objects.get_or_create(phone_number=sender_id)
+
+    Message.objects.create(
+        sender="USER",
+        session=session,
+        content=incoming_text,
+        unique_message_id=unique_message_id,
     )
+
+    agent = ToolAgent()
+
+    bot_response = agent.get_response(session, incoming_text)
+
+    whatsapp_service.send_message(to=sender_id, what=bot_response)
+
+    Message.objects.create(sender="BOT", session=session, content=bot_response)
 
     return JsonResponse(
         {

@@ -43,9 +43,9 @@ class Message(BaseModel):
         ("BOT", "Bot"),
     ]
 
+    unique_message_id = models.TextField()
     sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
     content = models.TextField()
-    unique_message_id = models.TextField()
     session = models.ForeignKey(
         Session,
         related_name="messages",

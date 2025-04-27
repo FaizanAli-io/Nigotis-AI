@@ -2,23 +2,25 @@ import requests
 from datetime import timedelta
 
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import GenericAPIView
+from rest_framework.exceptions import NotFound, ValidationError
 from drf_spectacular.utils import extend_schema
 from django.utils.timezone import now
 
 from .models import Message, Client, Session
 
 from .serializers import (
-    LoginRequestSerializer,
     ClientSerializer,
-    ChatMessageSerializer,
-    OpenAiTestSerializer,
+    MessageSerializer,
     SessionSerializer,
+    LoginRequestSerializer,
+    TalkToChatBotSerializer,
 )
 
-from .bot.pipeline import Pipeline
+from agent.agent import ToolAgent
 
 
 @extend_schema(tags=["Client"])
@@ -70,83 +72,78 @@ class ClientViewSet(ModelViewSet):
 
 
 @extend_schema(tags=["Session"])
-class CheckAuthTokenView(GenericAPIView):
-    def post(self, _, id):
-        try:
-            session = Client.objects.get(id=id)
-            elapsed = now() - session.authenticated_at
-
-            if elapsed > timedelta(hours=24):
-                response = requests.post(
-                    "https://nigotis-be.vercel.app/api/v1/user/login",
-                    json={
-                        "email": session.login_email,
-                        "password": session.login_password,
-                    },
-                )
-                response_data = response.json()
-
-                if response.status_code != 200 or not response_data.get("success"):
-                    return Response(
-                        {"error": "Failed to re-authenticate."},
-                        status=status.HTTP_401_UNAUTHORIZED,
-                    )
-
-                session.auth_token = response_data["data"]["token"]
-                session.authenticated_at = now()
-                session.save()
-
-                serializer = ClientSerializer(session)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-
-            else:
-                return Response(
-                    {"message": f"It has only been {elapsed}"},
-                    status=status.HTTP_200_OK,
-                )
-
-        except Client.DoesNotExist:
-            return Response(
-                {"error": "Chat session not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-
-@extend_schema(tags=["ChatSession"])
 class SessionViewSet(ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
 
 
 @extend_schema(tags=["Message"])
-class ChatMessageViewSet(ModelViewSet):
+class MessageViewSet(ModelViewSet):
     queryset = Message.objects.all()
-    serializer_class = ChatMessageSerializer
+    serializer_class = MessageSerializer
 
     def perform_create(self, serializer):
         serializer.save(sender="USER")
 
+    @action(detail=True, methods=["delete"], url_path="all")
+    def delete_all(self, _, pk):
+        Message.objects.filter(session_id=pk).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-@extend_schema(tags=["Testing"])
-class OpenAiTestView(GenericAPIView):
-    serializer_class = OpenAiTestSerializer
 
+@extend_schema(tags=["Other"])
+class CheckAuthTokenView(GenericAPIView):
+    def post(self, _, id):
+        try:
+            client = Client.objects.get(id=id)
+            response = requests.post(
+                "https://nigotis-be.vercel.app/api/v1/user/login",
+                json={
+                    "email": client.login_email,
+                    "password": client.login_password,
+                },
+            )
+            response_data = response.json()
+
+            if response.status_code != 200 or not response_data.get("success"):
+                return Response(
+                    {"error": "Failed to re-authenticate."},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+
+            client.auth_token = response_data["data"]["token"]
+            client.authenticated_at = now()
+            client.save()
+
+            serializer = ClientSerializer(client)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Client.DoesNotExist:
+            return Response(
+                {"error": "Chat session not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+@extend_schema(tags=["Other"], request=TalkToChatBotSerializer)
+class TalkToChatBotView(GenericAPIView):
     def post(self, request, id):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            session = Session.objects.get(id=id)
+        except Session.DoesNotExist:
+            raise NotFound("Session not found.")
 
-        session = Client.objects.get(id=id)
-        pipeline = Pipeline(session.auth_token)
-
-        feature = serializer.validated_data["feature"]
+        message = request.data.get("message")
+        if not message:
+            raise ValidationError("Message is required.")
 
         try:
-            if feature == "GEN":
-                message = serializer.validated_data["message"]
-                bot_message = pipeline.run_generic_question(message)
-            else:
-                bot_message = pipeline.run_analysis_func(feature)
+            agent = ToolAgent()
+            bot_message = agent.get_response(session, message)
+            Message.objects.create(sender="USER", session=session, content=message)
+            Message.objects.create(sender="BOT", session=session, content=bot_message)
         except Exception as e:
-            bot_message = e
+            raise ValidationError(f"Error while sending message: {str(e)}")
 
         return Response(
             {"message": bot_message},
