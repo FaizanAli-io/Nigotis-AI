@@ -1,5 +1,7 @@
 from django.db import models
 
+from pgvector.django import VectorField
+
 
 class BaseModel(models.Model):
     id = models.AutoField(primary_key=True)
@@ -46,6 +48,7 @@ class Message(BaseModel):
     unique_message_id = models.TextField()
     sender = models.CharField(max_length=10, choices=SENDER_CHOICES)
     content = models.TextField()
+    embedding = VectorField(dimensions=1536)
     session = models.ForeignKey(
         Session,
         related_name="messages",

@@ -5,16 +5,25 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 
 from tools.auth_tools import authenticate_session, logout_session, refresh_token
-from tools.create_tools import create_asset, create_expense, create_income
+from tools.create_tools import (
+    create_asset,
+    create_expense,
+    create_income,
+    create_invoice,
+)
 from tools.fetch_tools import fetch_tool
 from tools.analysis_tools import analysis_tool
 from tools.misc_tools import sum_tool
+
+from memory.manager import MemoryManager
 
 load_dotenv()
 
 
 class ToolAgent:
     def __init__(self):
+        self.memory_manager = MemoryManager()
+
         self.tools = [
             authenticate_session,
             logout_session,
@@ -22,6 +31,7 @@ class ToolAgent:
             create_asset,
             create_expense,
             create_income,
+            create_invoice,
             fetch_tool,
             analysis_tool,
             sum_tool,
@@ -37,10 +47,12 @@ Always use tools when taking actions on behalf of the user.
 Session ID is {session_id}, and Session Client is {client}.
 Today's date is {date}.""",
                 ),
+                ("system", "{history}"),
                 ("human", "{input}"),
                 ("placeholder", "{agent_scratchpad}"),
             ]
         )
+
         self.agent = create_tool_calling_agent(
             llm=self.llm, tools=self.tools, prompt=self.prompt
         )
@@ -56,9 +68,15 @@ Today's date is {date}.""",
             }
         return "The session does not have a client, please login first."
 
-    def get_response(self, session, incoming_text):
+    def get_response(self, session, incoming_text, **kwargs):
+        similar_messages = self.memory_manager.get_similar_messages(
+            session.id, incoming_text, threshold=0.2
+        )
+        context = "\n".join([f"{m.sender}: {m.content}" for m in similar_messages])
+
         response = self.executor.invoke(
             {
+                "history": context,
                 "input": incoming_text,
                 "session_id": session.id,
                 "date": date.today().isoformat(),
@@ -66,4 +84,10 @@ Today's date is {date}.""",
             }
         )
         print("Agent Response:", response)
-        return response["output"]
+
+        outgoing_text = response["output"]
+
+        self.memory_manager.add_message(session.id, "USER", incoming_text, **kwargs)
+        self.memory_manager.add_message(session.id, "BOT", outgoing_text)
+
+        return outgoing_text

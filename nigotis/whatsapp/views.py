@@ -37,20 +37,15 @@ def webhook(request):
 
     session, _ = Session.objects.get_or_create(phone_number=sender_id)
 
-    Message.objects.create(
-        sender="USER",
-        session=session,
-        content=incoming_text,
+    agent = ToolAgent()
+
+    bot_response = agent.get_response(
+        session,
+        incoming_text,
         unique_message_id=unique_message_id,
     )
 
-    agent = ToolAgent()
-
-    bot_response = agent.get_response(session, incoming_text)
-
     whatsapp_service.send_message(to=sender_id, what=bot_response)
-
-    Message.objects.create(sender="BOT", session=session, content=bot_response)
 
     return JsonResponse(
         {

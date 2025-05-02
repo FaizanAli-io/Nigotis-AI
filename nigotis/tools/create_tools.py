@@ -1,4 +1,5 @@
 import requests
+from typing import TypedDict
 
 from langchain_core.tools import tool
 
@@ -26,7 +27,11 @@ def create_asset(
             "totalAmount": totalAmount,
         },
     )
-    return "Asset created" if response.status_code == 201 else "Asset creation failed"
+    return (
+        "Asset created"
+        if response.status_code in [200, 201]
+        else "Asset creation failed"
+    )
 
 
 @tool
@@ -55,7 +60,9 @@ def create_expense(
         },
     )
     return (
-        "Expense created" if response.status_code == 201 else "Expense creation failed"
+        "Expense created"
+        if response.status_code in [200, 201]
+        else "Expense creation failed"
     )
 
 
@@ -78,4 +85,133 @@ def create_income(
             "notes": notes,
         },
     )
-    return "Income created" if response.status_code == 201 else "Income creation failed"
+    return (
+        "Income created"
+        if response.status_code in [200, 201]
+        else "Income creation failed"
+    )
+
+
+def get_client_name_id_map(token: str) -> dict[str, str] | str:
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    res = requests.get("https://nigotis-be.vercel.app/api/v1/client", headers=headers)
+    clients = res.json().get("data", [])
+    if not clients:
+        return "⚠ No clients found."
+    name_id_map = {}
+    for client in clients:
+        full_name = f'{client["personalInfo"]["firstName"]} {client["personalInfo"]["lastName"]}'
+        name_id_map[full_name.lower()] = client["_id"]
+    return name_id_map
+
+
+def get_product_name_id_map(token: str) -> dict[str, str] | str:
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    res = requests.get("https://nigotis-be.vercel.app/api/v1/product", headers=headers)
+    products = res.json().get("data", [])
+    if not products:
+        return "⚠ No products found."
+    name_id_map = {}
+    for product in products:
+        name_id_map[product["name"].lower()] = product["_id"]
+    return name_id_map
+
+
+def resolve_client_name(token: str, name: str) -> str:
+    mapping = get_client_name_id_map(token)
+    if isinstance(mapping, str):
+        return mapping
+    name_key = name.lower()
+    if name_key not in mapping:
+        return f"⚠ Client must be one of: {', '.join(mapping.keys())}"
+    return mapping[name_key]
+
+
+def resolve_product_name(token: str, name: str) -> str:
+    mapping = get_product_name_id_map(token)
+    if isinstance(mapping, str):
+        return mapping
+    name_key = name.lower()
+    if name_key not in mapping:
+        return f"⚠ Product must be one of: {', '.join(mapping.keys())}"
+    return mapping[name_key]
+
+
+class Item(TypedDict):
+    productName: str
+    quantity: int
+
+
+@tool
+def create_invoice(
+    token: str,
+    client_name: str,
+    issueDate: str,
+    dueDate: str,
+    status: str,
+    paidAmount: float,
+    items: list[Item],
+    tax: float = 0,
+    discount: float = 0,
+) -> str:
+    """
+    Create an invoice using client and product names with invoice details.
+
+    Parameters:
+    - token: Authorization token.
+    - client_name: Name of the client (used to resolve client ID).
+    - issueDate: Invoice issue date (YYYY-MM-DD).
+    - dueDate: Invoice due date (YYYY-MM-DD).
+    - status: Status of the invoice (e.g., "pending", "paid").
+    - paidAmount: Amount paid towards the invoice.
+    - items: A list of items, where each item is:
+        (productName: str, quantity: int).
+            - productName: Name of the product (used to resolve product ID).
+            - quantity: Quantity of the product.
+    - tax: Tax amount (default 0).
+    - discount: Discount amount (default 0).
+    """
+
+    client_id = resolve_client_name(token, client_name)
+    if isinstance(client_id, str) and client_id.startswith("⚠"):
+        return client_id
+
+    resolved_items = []
+    for item in items:
+        product_name, quantity = item["productName"], item["quantity"]
+        product_id = resolve_product_name(token, product_name)
+        if isinstance(product_id, str) and product_id.startswith("⚠"):
+            return product_id
+        resolved_items.append(
+            {
+                "productId": product_id,
+                "quantity": quantity,
+            }
+        )
+
+    response = requests.post(
+        f"{BASE_URL}/client/invoice",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "clientId": client_id,
+            "issueDate": issueDate,
+            "dueDate": dueDate,
+            "status": status,
+            "tax": tax,
+            "discount": discount,
+            "paidAmount": paidAmount,
+            "items": resolved_items,
+        },
+    )
+
+    return (
+        "Invoice created"
+        if response.status_code in [200, 201]
+        else "Invoice creation failed"
+    )

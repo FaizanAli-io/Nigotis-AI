@@ -1,14 +1,14 @@
 import requests
-from datetime import timedelta
 
 from rest_framework import status
+from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.generics import GenericAPIView
 from rest_framework.exceptions import NotFound, ValidationError
 from drf_spectacular.utils import extend_schema
 from django.utils.timezone import now
+
 
 from .models import Message, Client, Session
 
@@ -92,7 +92,7 @@ class MessageViewSet(ModelViewSet):
 
 
 @extend_schema(tags=["Other"])
-class CheckAuthTokenView(GenericAPIView):
+class CheckAuthTokenView(APIView):
     def post(self, _, id):
         try:
             client = Client.objects.get(id=id)
@@ -120,13 +120,13 @@ class CheckAuthTokenView(GenericAPIView):
 
         except Client.DoesNotExist:
             return Response(
-                {"error": "Chat session not found"},
+                {"error": "Client not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
 
 @extend_schema(tags=["Other"], request=TalkToChatBotSerializer)
-class TalkToChatBotView(GenericAPIView):
+class TalkToChatBotView(APIView):
     def post(self, request, id):
         try:
             session = Session.objects.get(id=id)
@@ -140,8 +140,6 @@ class TalkToChatBotView(GenericAPIView):
         try:
             agent = ToolAgent()
             bot_message = agent.get_response(session, message)
-            Message.objects.create(sender="USER", session=session, content=message)
-            Message.objects.create(sender="BOT", session=session, content=bot_message)
         except Exception as e:
             raise ValidationError(f"Error while sending message: {str(e)}")
 
