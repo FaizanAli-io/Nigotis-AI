@@ -3,7 +3,39 @@ from typing import TypedDict
 
 from langchain_core.tools import tool
 
+from .helpers import (
+    resolve_client_name,
+    resolve_product_name,
+)
+
 BASE_URL = "https://nigotis-be.vercel.app/api/v1"
+
+
+@tool
+def create_client(
+    token: str,
+    email: str,
+    title: str,
+    firstName: str,
+    middleName: str,
+    lastName: str,
+    joinDate: str,
+) -> str:
+    """Create a client with the provided details."""
+    response = requests.post(
+        f"{BASE_URL}/client",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "email": email,
+            "title": title,
+            "firstName": firstName,
+            "middleName": middleName,
+            "lastName": lastName,
+            "joinDate": joinDate,
+        },
+    )
+
+    return response.json()
 
 
 @tool
@@ -27,11 +59,8 @@ def create_asset(
             "totalAmount": totalAmount,
         },
     )
-    return (
-        "Asset created"
-        if response.status_code in [200, 201]
-        else "Asset creation failed"
-    )
+
+    return response.json()
 
 
 @tool
@@ -59,11 +88,8 @@ def create_expense(
             "to": to_date,
         },
     )
-    return (
-        "Expense created"
-        if response.status_code in [200, 201]
-        else "Expense creation failed"
-    )
+
+    return response.json()
 
 
 @tool
@@ -85,62 +111,8 @@ def create_income(
             "notes": notes,
         },
     )
-    return (
-        "Income created"
-        if response.status_code in [200, 201]
-        else "Income creation failed"
-    )
 
-
-def get_client_name_id_map(token: str) -> dict[str, str] | str:
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-    res = requests.get("https://nigotis-be.vercel.app/api/v1/client", headers=headers)
-    clients = res.json().get("data", [])
-    if not clients:
-        return "⚠ No clients found."
-    name_id_map = {}
-    for client in clients:
-        full_name = f'{client["personalInfo"]["firstName"]} {client["personalInfo"]["lastName"]}'
-        name_id_map[full_name.lower()] = client["_id"]
-    return name_id_map
-
-
-def get_product_name_id_map(token: str) -> dict[str, str] | str:
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-    res = requests.get("https://nigotis-be.vercel.app/api/v1/product", headers=headers)
-    products = res.json().get("data", [])
-    if not products:
-        return "⚠ No products found."
-    name_id_map = {}
-    for product in products:
-        name_id_map[product["name"].lower()] = product["_id"]
-    return name_id_map
-
-
-def resolve_client_name(token: str, name: str) -> str:
-    mapping = get_client_name_id_map(token)
-    if isinstance(mapping, str):
-        return mapping
-    name_key = name.lower()
-    if name_key not in mapping:
-        return f"⚠ Client must be one of: {', '.join(mapping.keys())}"
-    return mapping[name_key]
-
-
-def resolve_product_name(token: str, name: str) -> str:
-    mapping = get_product_name_id_map(token)
-    if isinstance(mapping, str):
-        return mapping
-    name_key = name.lower()
-    if name_key not in mapping:
-        return f"⚠ Product must be one of: {', '.join(mapping.keys())}"
-    return mapping[name_key]
+    return response.json()
 
 
 class Item(TypedDict):
@@ -210,8 +182,4 @@ def create_invoice(
         },
     )
 
-    return (
-        "Invoice created"
-        if response.status_code in [200, 201]
-        else "Invoice creation failed"
-    )
+    return response.json()

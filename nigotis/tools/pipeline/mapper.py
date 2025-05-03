@@ -1,6 +1,8 @@
 import requests
 from datetime import datetime
 
+BASE_URL = "https://nigotis-be.vercel.app/api/v1"
+
 
 class Mapper:
     def __init__(self, auth_token):
@@ -29,68 +31,87 @@ class Mapper:
         return response.json().get("data", None)
 
     def get_customers(self):
-        url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
-        invoices = self._make_request(url)
+        clients_url = f"{BASE_URL}/client"
+        clients = self._make_request(clients_url)
 
-        customers = {}
+        customers = {
+            client["_id"]: {
+                "id": client["_id"],
+                "name": Mapper.extract_name(client),
+                "products": [],
+            }
+            for client in clients
+        }
+
+        invoices_url = f"{BASE_URL}/client/invoice"
+        invoices = self._make_request(invoices_url)
+
         for invoice in invoices:
-            client = invoice["clientId"]
-            customer_id = client["_id"]
-            if customer_id not in customers:
-                customers[customer_id] = {
-                    "id": customer_id,
-                    "name": Mapper.extract_name(client),
-                    "products": [],
-                }
+            client = invoice.get("clientId")
+            if not client:
+                continue
 
-            for item in invoice["items"]:
-                product = item["productId"]
+            customer_id = client.get("_id")
+            if customer_id not in customers:
+                continue
+
+            for item in invoice.get("items", []):
+                product = item.get("productId", {})
                 customers[customer_id]["products"].append(
                     {
-                        "name": product["name"],
-                        "price": product["price"],
-                        "description": product["desc"],
-                        "quantity": item["quantity"],
-                        "issueDate": Mapper.format_date(invoice["issueDate"]),
+                        "name": product.get("name", ""),
+                        "price": product.get("price", 0),
+                        "description": product.get("desc", ""),
+                        "quantity": item.get("quantity", 0),
+                        "issueDate": Mapper.format_date(invoice.get("issueDate", "")),
                     }
                 )
 
         return list(customers.values())
 
     def get_products(self):
-        url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
-        invoices = self._make_request(url)
+        products_url = f"{BASE_URL}/product"
+        product_list = self._make_request(products_url)
 
-        products = {}
+        products = {
+            product["_id"]: {
+                "id": product["_id"],
+                "name": product["name"],
+                "price": product["price"],
+                "clients": [],
+            }
+            for product in product_list
+        }
+
+        invoices_url = f"{BASE_URL}/client/invoice"
+        invoices = self._make_request(invoices_url)
+
         for invoice in invoices:
-            client = invoice["clientId"]
-            name = Mapper.extract_name(client)
+            client = invoice.get("clientId")
+            if not client:
+                continue
 
-            for item in invoice["items"]:
-                product = item["productId"]
-                product_id = product["_id"]
+            client_name = Mapper.extract_name(client)
 
-                if product_id not in products:
-                    products[product_id] = {
-                        "name": product["name"],
-                        "price": product["price"],
-                        "clients": [],
-                    }
-
-                products[product_id]["clients"].append(
-                    {"name": name, "quantity": item["quantity"]}
-                )
+            for item in invoice.get("items", []):
+                product = item.get("productId", {})
+                product_id = product.get("_id")
+                if product_id in products:
+                    products[product_id]["clients"].append(
+                        {"name": client_name, "quantity": item.get("quantity", 0)}
+                    )
 
         return list(products.values())
 
     def get_invoices(self):
-        url = "https://nigotis-be.vercel.app/api/v1/client/invoice"
+        url = f"{BASE_URL}/client/invoice"
         invoices = self._make_request(url)
 
         cleaned_invoices = []
         for invoice in invoices:
             cleaned_invoices.append(
                 {
+                    "id": invoice["_id"],
                     "name": Mapper.extract_name(invoice["clientId"]),
                     "issueDate": Mapper.format_date(invoice["issueDate"]),
                     "dueDate": Mapper.format_date(invoice["dueDate"]),
@@ -109,13 +130,14 @@ class Mapper:
         return cleaned_invoices
 
     def get_incomes(self):
-        url = "https://nigotis-be.vercel.app/api/v1/income"
+        url = f"{BASE_URL}/income"
         incomes = self._make_request(url)
 
         cleaned_incomes = []
         for income in incomes:
             cleaned_incomes.append(
                 {
+                    "id": income["_id"],
                     "type": income["type"],
                     "notes": income["notes"],
                     "status": income["status"],
@@ -127,13 +149,14 @@ class Mapper:
         return cleaned_incomes
 
     def get_expenses(self):
-        url = "https://nigotis-be.vercel.app/api/v1/company/expense"
+        url = f"{BASE_URL}/company/expense"
         expenses = self._make_request(url)
 
         cleaned_expenses = []
         for expense in expenses:
             cleaned_expenses.append(
                 {
+                    "id": expense["_id"],
                     "type": expense["type"],
                     "title": expense["title"],
                     "description": expense["desc"],
@@ -147,13 +170,14 @@ class Mapper:
         return cleaned_expenses
 
     def get_assets(self):
-        url = "https://nigotis-be.vercel.app/api/v1/company/asset"
+        url = f"{BASE_URL}/company/asset"
         assets = self._make_request(url)
 
         cleaned_assets = []
         for asset in assets:
             cleaned_assets.append(
                 {
+                    "id": asset["_id"],
                     "title": asset["title"],
                     "description": asset["desc"],
                     "quantity": asset["quantity"],
@@ -165,7 +189,7 @@ class Mapper:
         return cleaned_assets
 
     def get_payrolls(self):
-        url = "https://nigotis-be.vercel.app/api/v1/user"
+        url = f"{BASE_URL}/user"
         employees = self._make_request(url)
 
         cleaned_payrolls = []
@@ -175,6 +199,7 @@ class Mapper:
 
             cleaned_payrolls.append(
                 {
+                    "id": employee["_id"],
                     "name": Mapper.extract_name(employee),
                     "department": jobInfo.get("department", "N/A"),
                     "jobRole": jobInfo.get("jobRole", "N/A"),
@@ -195,11 +220,3 @@ class Mapper:
             )
 
         return cleaned_payrolls
-
-
-if __name__ == "__main__":
-    auth_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3OGI1YmZiYWFhNTlkMmRlYTRjOTE1MiIsImlhdCI6MTc0NTY4MzAxNSwiZXhwIjoxNzQ4Mjc1MDE1fQ.c3H3vdAbcMfXLuyzSED4d5iT24oPwUYAKVhkUm7CuQ"
-    mapper = Mapper(auth_token)
-
-    data = getattr(mapper, "get_payrolls")()
-    print("Data:", data)

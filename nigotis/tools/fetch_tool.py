@@ -1,18 +1,9 @@
 import requests
-from enum import Enum
 from pydantic import BaseModel, Field
 from langchain_core.tools import tool
+
 from .pipeline.mapper import Mapper
-
-
-class EntityEnum(str, Enum):
-    customers = "customers"
-    products = "products"
-    invoices = "invoices"
-    expenses = "expenses"
-    incomes = "incomes"
-    assets = "assets"
-    payrolls = "payrolls"
+from .helpers import EntityEnum
 
 
 class FetchToolInput(BaseModel):

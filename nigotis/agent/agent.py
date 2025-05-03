@@ -4,14 +4,20 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 
-from tools.auth_tools import authenticate_session, logout_session, refresh_token
+from tools.auth_tools import (
+    refresh_token,
+    logout_session,
+    authenticate_session,
+)
 from tools.create_tools import (
     create_asset,
-    create_expense,
+    create_client,
     create_income,
+    create_expense,
     create_invoice,
 )
-from tools.fetch_tools import fetch_tool
+from tools.fetch_tool import fetch_tool
+from tools.delete_tool import delete_tool
 from tools.analysis_tools import analysis_tool
 from tools.misc_tools import sum_tool
 
@@ -29,10 +35,12 @@ class ToolAgent:
             logout_session,
             refresh_token,
             create_asset,
-            create_expense,
+            create_client,
             create_income,
+            create_expense,
             create_invoice,
             fetch_tool,
+            delete_tool,
             analysis_tool,
             sum_tool,
         ]
@@ -70,9 +78,14 @@ Today's date is {date}.""",
 
     def get_response(self, session, incoming_text, **kwargs):
         similar_messages = self.memory_manager.get_similar_messages(
-            session.id, incoming_text, threshold=0.2
+            session.id, incoming_text, threshold=0.25, limit=10
         )
-        context = "\n".join([f"{m.sender}: {m.content}" for m in similar_messages])
+
+        context = (
+            "PAST MESSAGES:-\n"
+            + "\n".join([f"{m.sender}: {m.content}" for m in similar_messages])
+            + "\nEND OF PAST MESSAGES\n\n"
+        )
 
         response = self.executor.invoke(
             {
