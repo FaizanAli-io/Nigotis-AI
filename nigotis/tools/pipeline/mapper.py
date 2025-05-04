@@ -11,12 +11,16 @@ class Mapper:
     @staticmethod
     def format_date(date_string):
         date_obj = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
-        return date_obj.strftime("%d-%m-%Y")
+        return date_obj.strftime("%Y-%m-%d")
 
     @staticmethod
     def extract_name(client):
         info = client["personalInfo"]
-        return f"{info['title']} {info['firstName']} {info.get('lastName', '')}"
+        title = info.get("title", "")
+        fname = info.get("firstName", "")
+        mname = info.get("middleName", "")
+        lname = info.get("lastName", "")
+        return f"{title} {fname}{' ' + mname if mname else ''} {lname}"
 
     def _make_request(self, url):
         headers = {"Authorization": f"Bearer {self.auth_token}"}
@@ -163,7 +167,6 @@ class Mapper:
                     "totalAmount": expense["totalAmount"],
                     "to": Mapper.format_date(expense["to"]),
                     "from": Mapper.format_date(expense["from"]),
-                    "date": Mapper.format_date(expense["date"]),
                 }
             )
 

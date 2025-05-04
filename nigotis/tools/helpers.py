@@ -26,7 +26,12 @@ def get_client_name_id_map(token: str) -> dict[str, str] | str:
         return "⚠ No clients found."
     name_id_map = {}
     for client in clients:
-        full_name = f'{client["personalInfo"]["firstName"]} {client["personalInfo"]["lastName"]}'
+        info = client["personalInfo"]
+        title = info.get("title", "")
+        fname = info.get("firstName", "")
+        mname = info.get("middleName", "")
+        lname = info.get("lastName", "")
+        full_name = f"{title} {fname}{' ' + mname if mname else ''} {lname}"
         name_id_map[full_name.lower()] = client["_id"]
     return name_id_map
 

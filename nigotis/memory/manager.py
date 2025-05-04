@@ -19,14 +19,20 @@ def embed_message(content: str) -> list[float]:
 class MemoryManager:
     @staticmethod
     @transaction.atomic
-    def add_message(session_id: int, sender: str, content: str, **kwargs):
+    def add_message(
+        session_id: int,
+        sender: str,
+        content: str,
+        unique_message_id: str = None,
+    ):
         embedding = embed_message(content)
+
         Message.objects.create(
             session_id=session_id,
             sender=sender,
             content=content,
             embedding=embedding,
-            **kwargs,
+            **({"unique_message_id": unique_message_id} if unique_message_id else {})
         )
 
     @staticmethod
@@ -46,8 +52,5 @@ class MemoryManager:
             queryset = queryset[:limit]
 
         messages = list(queryset)
-
-        for m in messages:
-            print(f"{m.sender}: {m.content}\nSimilarity: {m.similarity:.4f}\n")
 
         return messages

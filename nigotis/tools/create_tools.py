@@ -1,5 +1,5 @@
 import requests
-from typing import TypedDict
+from typing import TypedDict, Literal
 
 from langchain_core.tools import tool
 
@@ -68,9 +68,8 @@ def create_expense(
     token: str,
     title: str,
     desc: str,
-    type: str,
+    type: Literal["bill", "payroll", "others"],
     totalAmount: float,
-    date: str,
     from_date: str,
     to_date: str,
 ) -> str:
@@ -83,7 +82,7 @@ def create_expense(
             "desc": desc,
             "type": type,
             "totalAmount": totalAmount,
-            "date": date,
+            "date": from_date,
             "from": from_date,
             "to": to_date,
         },
@@ -95,7 +94,7 @@ def create_expense(
 @tool
 def create_income(
     token: str,
-    type: str,
+    type: Literal["invoice", "others"],
     totalAmount: float,
     date: str,
     notes: str,
@@ -127,7 +126,6 @@ def create_invoice(
     issueDate: str,
     dueDate: str,
     status: str,
-    paidAmount: float,
     items: list[Item],
     tax: float = 0,
     discount: float = 0,
@@ -141,7 +139,6 @@ def create_invoice(
     - issueDate: Invoice issue date (YYYY-MM-DD).
     - dueDate: Invoice due date (YYYY-MM-DD).
     - status: Status of the invoice (e.g., "pending", "paid").
-    - paidAmount: Amount paid towards the invoice.
     - items: A list of items, where each item is:
         (productName: str, quantity: int).
             - productName: Name of the product (used to resolve product ID).
@@ -177,7 +174,6 @@ def create_invoice(
             "status": status,
             "tax": tax,
             "discount": discount,
-            "paidAmount": paidAmount,
             "items": resolved_items,
         },
     )

@@ -21,15 +21,11 @@ from tools.delete_tool import delete_tool
 from tools.analysis_tools import analysis_tool
 from tools.misc_tools import sum_tool
 
-from memory.manager import MemoryManager
-
 load_dotenv()
 
 
 class ToolAgent:
     def __init__(self):
-        self.memory_manager = MemoryManager()
-
         self.tools = [
             authenticate_session,
             logout_session,
@@ -55,7 +51,7 @@ Always use tools when taking actions on behalf of the user.
 Session ID is {session_id}, and Session Client is {client}.
 Today's date is {date}.""",
                 ),
-                ("system", "{history}"),
+                # ("system", "{history}"),
                 ("human", "{input}"),
                 ("placeholder", "{agent_scratchpad}"),
             ]
@@ -76,20 +72,20 @@ Today's date is {date}.""",
             }
         return "The session does not have a client, please login first."
 
-    def get_response(self, session, incoming_text, **kwargs):
-        similar_messages = self.memory_manager.get_similar_messages(
-            session.id, incoming_text, threshold=0.25, limit=10
-        )
+    def get_response(self, session, incoming_text):
+        # similar_messages = self.memory_manager.get_similar_messages(
+        #     session.id, incoming_text, threshold=0.25, limit=10
+        # )
 
-        context = (
-            "PAST MESSAGES:-\n"
-            + "\n".join([f"{m.sender}: {m.content}" for m in similar_messages])
-            + "\nEND OF PAST MESSAGES\n\n"
-        )
+        # context = (
+        #     "PAST MESSAGES:-\n"
+        #     + "\n".join([f"{m.sender}: {m.content}" for m in similar_messages])
+        #     + "\nEND OF PAST MESSAGES\n\n"
+        # )
 
         response = self.executor.invoke(
             {
-                "history": context,
+                # "history": context,
                 "input": incoming_text,
                 "session_id": session.id,
                 "date": date.today().isoformat(),
@@ -100,7 +96,7 @@ Today's date is {date}.""",
 
         outgoing_text = response["output"]
 
-        self.memory_manager.add_message(session.id, "USER", incoming_text, **kwargs)
-        self.memory_manager.add_message(session.id, "BOT", outgoing_text)
+        # self.memory_manager.add_message(session.id, "USER", incoming_text)
+        # self.memory_manager.add_message(session.id, "BOT", outgoing_text)
 
         return outgoing_text

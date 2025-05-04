@@ -2,9 +2,12 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from agent.agent import ToolAgent
+from memory.manager import MemoryManager
 from chatbot.models import Message, Session
 
 from .service import WhatsAppService
+
+memory_manager = MemoryManager()
 
 
 @csrf_exempt
@@ -37,15 +40,24 @@ def webhook(request):
 
     session, _ = Session.objects.get_or_create(phone_number=sender_id)
 
-    agent = ToolAgent()
-
-    bot_response = agent.get_response(
-        session,
-        incoming_text,
+    memory_manager.add_message(
+        session_id=session.id,
+        sender="USER",
+        content=incoming_text,
         unique_message_id=unique_message_id,
     )
 
+    agent = ToolAgent()
+
+    bot_response = agent.get_response(session, incoming_text)
+
     whatsapp_service.send_message(to=sender_id, what=bot_response)
+
+    memory_manager.add_message(
+        session_id=session.id,
+        sender="BOT",
+        content=bot_response,
+    )
 
     return JsonResponse(
         {
