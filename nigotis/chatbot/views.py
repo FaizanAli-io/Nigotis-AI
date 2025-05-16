@@ -30,7 +30,10 @@ class ClientViewSet(ModelViewSet):
 
     @extend_schema(
         request=LoginRequestSerializer,
-        responses={201: ClientSerializer},
+        responses={
+            200: ClientSerializer,
+            201: ClientSerializer,
+        },
     )
     def create(self, request):
         login_serializer = LoginRequestSerializer(data=request.data)
@@ -53,15 +56,30 @@ class ClientViewSet(ModelViewSet):
                 )
 
             data = response_data.get("data", {})
-            session = Client.objects.create(
-                name=f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}",
-                role=data["role"].upper(),
+            auth_token = data["token"]
+
+            existing_client = Client.objects.filter(
                 login_email=login_email,
                 login_password=login_password,
-                auth_token=data["token"],
+            ).first()
+
+            if existing_client:
+                existing_client.auth_token = auth_token
+                existing_client.authenticated_at = now()
+                existing_client.save()
+
+                serializer = ClientSerializer(existing_client)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            client = Client.objects.create(
+                name=f"{data['personalInfo']['firstName']} {data['personalInfo']['lastName']}",
+                auth_token=auth_token,
+                login_email=login_email,
+                role=data["role"].upper(),
+                login_password=login_password,
             )
 
-            serializer = ClientSerializer(session)
+            serializer = ClientSerializer(client)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except requests.RequestException:
@@ -76,6 +94,21 @@ class SessionViewSet(ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
 
+    @extend_schema(
+        summary="Get or delete all messages for a session",
+        responses={200: MessageSerializer(many=True), 204: None},
+    )
+    @action(detail=True, methods=["get", "delete"], url_path="messages")
+    def manage_messages(self, request, pk=None):
+        if request.method == "GET":
+            messages = Message.objects.filter(session_id=pk)
+            serializer = MessageSerializer(messages, many=True)
+            return Response(serializer.data)
+
+        elif request.method == "DELETE":
+            Message.objects.filter(session_id=pk).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @extend_schema(tags=["Message"])
 class MessageViewSet(ModelViewSet):
@@ -84,11 +117,6 @@ class MessageViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(sender="USER")
-
-    @action(detail=True, methods=["delete"], url_path="all")
-    def delete_all(self, _, pk):
-        Message.objects.filter(session_id=pk).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(tags=["Other"])
