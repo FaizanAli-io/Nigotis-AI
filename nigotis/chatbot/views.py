@@ -9,7 +9,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from drf_spectacular.utils import extend_schema
 from django.utils.timezone import now
 
-
+from memory.manager import MemoryManager
 from .models import Message, Client, Session
 
 from .serializers import (
@@ -88,6 +88,21 @@ class ClientViewSet(ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @extend_schema(
+        summary="Get or delete all sessions for a client",
+        responses={200: SessionSerializer(many=True), 204: None},
+    )
+    @action(detail=True, methods=["get", "delete"], url_path="sessions")
+    def manage_sessions(self, request, pk=None):
+        if request.method == "GET":
+            sessions = Session.objects.filter(client_id=pk)
+            serializer = SessionSerializer(sessions, many=True)
+            return Response(serializer.data)
+
+        elif request.method == "DELETE":
+            Session.objects.filter(client_id=pk).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 @extend_schema(tags=["Session"])
 class SessionViewSet(ModelViewSet):
@@ -165,9 +180,24 @@ class TalkToChatBotView(APIView):
         if not message:
             raise ValidationError("Message is required.")
 
+        memory_manager = MemoryManager()
+
+        memory_manager.add_message(
+            sender="USER",
+            content=message,
+            session_id=session.id,
+        )
+
         try:
             agent = ToolAgent()
             bot_message = agent.get_response(session, message)
+
+            memory_manager.add_message(
+                sender="BOT",
+                content=bot_message,
+                session_id=session.id,
+            )
+
         except Exception as e:
             raise ValidationError(f"Error while sending message: {str(e)}")
 

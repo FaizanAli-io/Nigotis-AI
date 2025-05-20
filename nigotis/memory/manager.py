@@ -20,18 +20,18 @@ class MemoryManager:
     @staticmethod
     @transaction.atomic
     def add_message(
-        session_id: int,
         sender: str,
         content: str,
+        session_id: int,
         unique_message_id: str = None,
     ):
         embedding = embed_message(content)
 
         Message.objects.create(
-            session_id=session_id,
             sender=sender,
             content=content,
             embedding=embedding,
+            session_id=session_id,
             **({"unique_message_id": unique_message_id} if unique_message_id else {})
         )
 
