@@ -119,6 +119,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",
     "https://nigotis-fe.vercel.app",
     "https://nigotis-be.vercel.app",
+    "https://www.nigotis.com",
     "https://nigotis.com",
 ]
 CORS_ALLOW_CREDENTIALS = True
