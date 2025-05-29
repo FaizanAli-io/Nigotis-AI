@@ -4,6 +4,8 @@ from langchain_core.tools import tool
 from django.utils.timezone import now
 from chatbot.models import Session, Client
 
+from utils import functions as F
+
 
 BASE_URL = "https://nigotis-be.vercel.app/api/v1"
 
@@ -27,11 +29,10 @@ def authenticate_session(session_id: int, email: str, password: str) -> str:
     client = Client.objects.filter(login_email=email).first()
 
     if not client:
-        client_name = f"{data['personalInfo']['firstName']} {data['personalInfo'].get('lastName', '')}"
         client = Client.objects.create(
-            name=client_name,
             login_email=email,
             login_password=password,
+            name=F.extract_name(data),
             role=data["role"].upper(),
             auth_token=data["token"],
             authenticated_at=now(),

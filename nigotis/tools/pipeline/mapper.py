@@ -1,6 +1,8 @@
 import requests
 from datetime import datetime
 
+from utils import functions as F
+
 BASE_URL = "https://nigotis-be.vercel.app/api/v1"
 
 
@@ -12,15 +14,6 @@ class Mapper:
     def format_date(date_string):
         date_obj = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ")
         return date_obj.strftime("%Y-%m-%d")
-
-    @staticmethod
-    def extract_name(client):
-        info = client["personalInfo"]
-        title = info.get("title", "")
-        fname = info.get("firstName", "")
-        mname = info.get("middleName", "")
-        lname = info.get("lastName", "")
-        return f"{title} {fname}{' ' + mname if mname else ''} {lname}"
 
     def _make_request(self, url):
         headers = {"Authorization": f"Bearer {self.auth_token}"}
@@ -41,7 +34,7 @@ class Mapper:
         customers = {
             client["_id"]: {
                 "id": client["_id"],
-                "name": Mapper.extract_name(client),
+                "name": F.extract_name(client),
                 "products": [],
             }
             for client in clients
@@ -95,7 +88,7 @@ class Mapper:
             if not client:
                 continue
 
-            client_name = Mapper.extract_name(client)
+            client_name = F.extract_name(client)
 
             for item in invoice.get("items", []):
                 product = item.get("productId", {})
@@ -116,7 +109,7 @@ class Mapper:
             cleaned_invoices.append(
                 {
                     "id": invoice["_id"],
-                    "name": Mapper.extract_name(invoice["clientId"]),
+                    "name": F.extract_name(invoice["clientId"]),
                     "issueDate": Mapper.format_date(invoice["issueDate"]),
                     "dueDate": Mapper.format_date(invoice["dueDate"]),
                     "status": invoice["status"],
@@ -203,7 +196,7 @@ class Mapper:
             cleaned_payrolls.append(
                 {
                     "id": employee["_id"],
-                    "name": Mapper.extract_name(employee),
+                    "name": F.extract_name(employee),
                     "department": jobInfo.get("department", "N/A"),
                     "jobRole": jobInfo.get("jobRole", "N/A"),
                     "role": employee.get("role", "N/A"),

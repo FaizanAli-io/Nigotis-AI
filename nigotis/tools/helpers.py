@@ -2,6 +2,8 @@ import requests
 
 from enum import Enum
 
+from utils import functions as F
+
 BASE_URL = "https://nigotis-be.vercel.app/api/v1"
 
 
@@ -26,12 +28,7 @@ def get_client_name_id_map(token: str) -> dict[str, str] | str:
         return "⚠ No clients found."
     name_id_map = {}
     for client in clients:
-        info = client["personalInfo"]
-        title = info.get("title", "")
-        fname = info.get("firstName", "")
-        mname = info.get("middleName", "")
-        lname = info.get("lastName", "")
-        full_name = f"{title} {fname}{' ' + mname if mname else ''} {lname}"
+        full_name = F.extract_name(client)
         name_id_map[full_name.lower()] = client["_id"]
     return name_id_map
 

@@ -25,7 +25,7 @@ class Client(BaseModel):
     login_email = models.EmailField(null=True, blank=True)
     login_password = models.CharField(max_length=255, null=True, blank=True)
     auth_token = models.CharField(max_length=255, null=True, blank=True)
-    authenticated_at = models.DateTimeField(null=True, blank=True)
+    authenticated_at = models.DateTimeField(null=True, blank=True, auto_now=True)
 
 
 class Session(BaseModel):

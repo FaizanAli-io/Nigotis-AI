@@ -22,6 +22,19 @@ from .serializers import (
 
 from agent.agent import ToolAgent
 
+from utils import functions as F
+
+
+def call_login_api(email, password, account_type):
+    return requests.post(
+        "https://nigotis-be.vercel.app/api/v1/user/login",
+        json={
+            "email": email,
+            "password": password,
+            "loginAs": account_type,
+        },
+    ).json()
+
 
 @extend_schema(tags=["Client"])
 class ClientViewSet(ModelViewSet):
@@ -39,17 +52,14 @@ class ClientViewSet(ModelViewSet):
         login_serializer = LoginRequestSerializer(data=request.data)
         login_serializer.is_valid(raise_exception=True)
 
-        login_email = login_serializer.validated_data["email"]
-        login_password = login_serializer.validated_data["password"]
+        email = login_serializer.validated_data["email"]
+        password = login_serializer.validated_data["password"]
+        account_type = login_serializer.validated_data["account_type"]
 
         try:
-            response = requests.post(
-                "https://nigotis-be.vercel.app/api/v1/user/login",
-                json={"email": login_email, "password": login_password},
-            )
-            response_data = response.json()
+            response_data = call_login_api(email, password, account_type)
 
-            if response.status_code != 200 or not response_data.get("success"):
+            if not response_data.get("success"):
                 return Response(
                     {"error": "Authentication failed."},
                     status=status.HTTP_401_UNAUTHORIZED,
@@ -59,8 +69,8 @@ class ClientViewSet(ModelViewSet):
             auth_token = data["token"]
 
             existing_client = Client.objects.filter(
-                login_email=login_email,
-                login_password=login_password,
+                login_email=email,
+                login_password=password,
             ).first()
 
             if existing_client:
@@ -72,11 +82,11 @@ class ClientViewSet(ModelViewSet):
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             client = Client.objects.create(
-                name=f"{data['personalInfo']['firstName']} {data['personalInfo']['lastName']}",
+                login_email=email,
                 auth_token=auth_token,
-                login_email=login_email,
+                login_password=password,
+                name=F.extract_name(data),
                 role=data["role"].upper(),
-                login_password=login_password,
             )
 
             serializer = ClientSerializer(client)
@@ -139,23 +149,22 @@ class CheckAuthTokenView(APIView):
     def post(self, _, id):
         try:
             client = Client.objects.get(id=id)
-            response = requests.post(
-                "https://nigotis-be.vercel.app/api/v1/user/login",
-                json={
-                    "email": client.login_email,
-                    "password": client.login_password,
-                },
-            )
-            response_data = response.json()
 
-            if response.status_code != 200 or not response_data.get("success"):
+            login_data = {
+                "email": client.login_email,
+                "password": client.login_password,
+                "account_type": "admin" if client.role == "ADMIN" else "sub-account",
+            }
+
+            response_data = call_login_api(**login_data)
+
+            if not response_data.get("success"):
                 return Response(
                     {"error": "Failed to re-authenticate."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
 
             client.auth_token = response_data["data"]["token"]
-            client.authenticated_at = now()
             client.save()
 
             serializer = ClientSerializer(client)

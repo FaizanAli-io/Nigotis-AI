@@ -5,6 +5,7 @@ from .models import Message, Client, Session
 class LoginRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
+    account_type = serializers.ChoiceField(choices=["admin", "sub-account"])
 
 
 class ClientSerializer(serializers.ModelSerializer):
