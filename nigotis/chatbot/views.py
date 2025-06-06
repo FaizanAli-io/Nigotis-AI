@@ -25,17 +25,6 @@ from agent.agent import ToolAgent
 from utils import functions as F
 
 
-def call_login_api(email, password, account_type):
-    return requests.post(
-        "https://nigotis-be.vercel.app/api/v1/user/login",
-        json={
-            "email": email,
-            "password": password,
-            "loginAs": account_type,
-        },
-    ).json()
-
-
 @extend_schema(tags=["Client"])
 class ClientViewSet(ModelViewSet):
     queryset = Client.objects.all()
@@ -57,7 +46,7 @@ class ClientViewSet(ModelViewSet):
         account_type = login_serializer.validated_data["account_type"]
 
         try:
-            response_data = call_login_api(email, password, account_type)
+            response_data = F.call_login_api(email, password, account_type)
 
             if not response_data.get("success"):
                 return Response(
@@ -156,7 +145,7 @@ class CheckAuthTokenView(APIView):
                 "account_type": "admin" if client.role == "ADMIN" else "sub-account",
             }
 
-            response_data = call_login_api(**login_data)
+            response_data = F.call_login_api(**login_data)
 
             if not response_data.get("success"):
                 return Response(

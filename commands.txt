@@ -11,3 +11,5 @@ uv pip install -r requirements.txt
 pkill -f 'ngrok|python3'
 nohup python3 nigotis/manage.py runserver 0.0.0.0:8000 &
 nohup ngrok http --domain=one-urchin-ultimate.ngrok-free.app 8000 &
+
+NGROK AUTH: ngrok config add-authtoken 2scGDlDqHRa9rvb39EicbD7HrCe_31oh7t9ipn6zugKqDxG55

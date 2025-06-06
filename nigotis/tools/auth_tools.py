@@ -7,22 +7,14 @@ from chatbot.models import Session, Client
 from utils import functions as F
 
 
-BASE_URL = "https://nigotis-be.vercel.app/api/v1"
-
-
 @tool
 def authenticate_session(session_id: int, email: str, password: str) -> str:
     """Authenticate a user session via provided session ID, email, and password."""
     session = Session.objects.get(id=session_id)
 
-    response = requests.post(
-        f"{BASE_URL}/user/login",
-        json={"email": email, "password": password},
-    )
+    response_data = F.call_login_api(email, password, "admin")
 
-    response_data = response.json()
-
-    if response.status_code != 200 or not response_data.get("success"):
+    if not response_data.get("success"):
         return "Authentication failed"
 
     data = response_data.get("data", {})
@@ -62,15 +54,10 @@ def refresh_token(session_id: int) -> str:
     if not client:
         return "No client associated with session"
 
-    response = requests.post(
-        f"{BASE_URL}/user/login",
-        json={"email": client.login_email, "password": client.login_password},
-    )
+    response_data = F.call_login_api(client.login_email, client.login_password, "admin")
 
-    response_data = response.json()
-
-    if response.status_code != 200 or not response_data.get("success"):
-        return "Token refresh failed"
+    if not response_data.get("success"):
+        return "Authentication failed"
 
     data = response_data.get("data", {})
     client.auth_token = data["token"]
