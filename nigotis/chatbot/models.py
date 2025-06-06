@@ -29,6 +29,7 @@ class Client(BaseModel):
 
 
 class Session(BaseModel):
+    title = models.CharField(max_length=50, null=True, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     website = models.BooleanField(default=False)
     client = models.ForeignKey(

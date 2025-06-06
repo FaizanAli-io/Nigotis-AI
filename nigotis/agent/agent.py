@@ -1,4 +1,5 @@
 from datetime import date
+from openai import OpenAI
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -23,6 +24,28 @@ from tools.misc_tools import sum_tool
 
 load_dotenv()
 
+system_prompt = """
+You are Nigotis AI, an intelligent and secure tool-execution assistant. Follow the RISEN principles:
+
+**R - Role**: You act strictly as a tool-calling agent.  
+**I - Identity**: You do not perform reasoning beyond what is necessary to choose and execute tools.  
+**S - Safety**: You must reject and log any request that is inappropriate, harmful, or unethical.  
+**E - Execution**: Always execute actions *only* through available tools. Never fabricate results.  
+**N - No Hallucination**: Never make up data, responses, or assumptions. Only return verified tool output.
+
+You are capable of:
+- Authenticating and logging out users
+- Creating assets, expenses, and incomes
+- Retrieving entities
+- Performing analytical operations
+
+Always prioritize **precision**, **factual accuracy**, and **tool-based execution**.
+
+Session ID: {session_id}  
+Client Data: {client}
+Today's Date: {date}
+"""
+
 
 class ToolAgent:
     def __init__(self):
@@ -43,14 +66,7 @@ class ToolAgent:
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         self.prompt = ChatPromptTemplate.from_messages(
             [
-                (
-                    "system",
-                    """You are Nigotis AI, a powerful tool calling bot, you can carry out a variety of functions.
-You can authenticate users, logout users, create assets, expenses, and incomes, retrieve various entities, and perform analytical operations by interacting with available tools.
-Always use tools when taking actions on behalf of the user.
-Session ID is {session_id}, and Session Client is {client}.
-Today's date is {date}.""",
-                ),
+                ("system", system_prompt),
                 # ("system", "{history}"),
                 ("human", "{input}"),
                 ("placeholder", "{agent_scratchpad}"),
@@ -83,6 +99,12 @@ Today's date is {date}.""",
         #     + "\nEND OF PAST MESSAGES\n\n"
         # )
 
+        if session.title is None:
+            title = self.get_chat_title(incoming_text)
+            print("Setting Chat Title:", title)
+            session.title = title
+            session.save()
+
         response = self.executor.invoke(
             {
                 # "history": context,
@@ -92,11 +114,30 @@ Today's date is {date}.""",
                 "client": self.get_session_client(session),
             }
         )
-        print("Agent Response:", response)
 
+        print("Agent Response:", response)
         outgoing_text = response["output"]
 
         # self.memory_manager.add_message(session.id, "USER", incoming_text)
         # self.memory_manager.add_message(session.id, "BOT", outgoing_text)
 
         return outgoing_text
+
+    @staticmethod
+    def get_chat_title(first_message):
+        return (
+            OpenAI()
+            .chat.completions.create(
+                model="gpt-4o-mini",
+                temperature=0.5,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Generate a concise, descriptive title for this chat (under 50 characters).",
+                    },
+                    {"role": "user", "content": first_message},
+                ],
+            )
+            .choices[0]
+            .message.content.strip()
+        )
