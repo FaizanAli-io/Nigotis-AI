@@ -80,7 +80,7 @@ class WhatsAppService:
                 return JsonResponse({"message": f"Ignored {message_type}"}, status=200)
 
             sender_id, unique_message_id = message["from"], message["id"]
-            incoming_text = message.get["text"]["body"].strip()
+            incoming_text = message["text"]["body"].strip()
             print("Message Received:", incoming_text)
 
             if contacts:
