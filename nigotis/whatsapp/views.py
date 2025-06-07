@@ -25,7 +25,8 @@ def webhook(request):
         unique_message_id=unique_message_id
     ).exists()
 
-    print(f"Message: {input_payload} already exists: {already_exists}")
+    print(f"Message: {input_payload}")
+    print(f"Already exists: {already_exists}")
 
     if already_exists:
         return JsonResponse(

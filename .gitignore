@@ -171,7 +171,5 @@ cython_debug/
 .pypirc
 
 # Project Specific
-dump/*
-data/
-*.pdf
+.ignore
 *.pem

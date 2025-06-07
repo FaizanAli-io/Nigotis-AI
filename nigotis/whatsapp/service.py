@@ -58,30 +58,29 @@ class WhatsAppService:
 
         try:
             data = json.loads(request.body)
+
             changes = (
                 data.get("entry", [{}])[0].get("changes", [{}])[0].get("value", {})
             )
+
             messages, contacts = changes.get("messages", []), changes.get(
                 "contacts", []
             )
 
             if "statuses" in changes:
-                return JsonResponse(
-                    {"status": "ignored status update"},
-                    status=200,
-                )
+                return JsonResponse({"message": "Ignored status update"}, status=200)
 
             if not messages:
-                return JsonResponse(
-                    {
-                        "status": "success",
-                        "message": "Webhook processed",
-                    },
-                    status=200,
-                )
+                return JsonResponse({"message": "Webhook processed"}, status=200)
 
-            sender_id, unique_message_id = messages[0]["from"], messages[0]["id"]
-            incoming_text = messages[0].get("text", {}).get("body", "").strip()
+            message = messages[0]
+            message_type = message["type"]
+
+            if message_type != "text":
+                return JsonResponse({"message": f"Ignored {message_type}"}, status=200)
+
+            sender_id, unique_message_id = message["from"], message["id"]
+            incoming_text = message.get["text"]["body"].strip()
             print("Message Received:", incoming_text)
 
             if contacts:
