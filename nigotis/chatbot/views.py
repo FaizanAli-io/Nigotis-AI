@@ -2,6 +2,7 @@ import requests
 
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -133,8 +134,10 @@ class MessageViewSet(ModelViewSet):
         serializer.save(sender="USER")
 
 
-@extend_schema(tags=["Other"])
-class CheckAuthTokenView(APIView):
+@extend_schema(tags=["Other"], request=None)
+class CheckAuthTokenView(GenericAPIView):
+    serializer_class = ClientSerializer
+
     def post(self, _, id):
         try:
             client = Client.objects.get(id=id)
@@ -166,8 +169,10 @@ class CheckAuthTokenView(APIView):
             )
 
 
-@extend_schema(tags=["Other"], request=TalkToChatBotSerializer)
-class TalkToChatBotView(APIView):
+@extend_schema(tags=["Other"])
+class TalkToChatBotView(GenericAPIView):
+    serializer_class = TalkToChatBotSerializer
+
     def post(self, request, id):
         try:
             session = Session.objects.get(id=id)
