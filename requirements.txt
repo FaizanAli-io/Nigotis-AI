@@ -6,6 +6,7 @@ djangorestframework
 openai
 schedule
 pgvector
+gunicorn
 llama_index
 python-dotenv
 psycopg2-binary
