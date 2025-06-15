@@ -4,6 +4,7 @@ django-cors-headers
 djangorestframework
 
 openai
+twilio
 schedule
 pgvector
 gunicorn
